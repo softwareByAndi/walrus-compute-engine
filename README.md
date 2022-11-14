@@ -5,7 +5,7 @@ See `devlog.md` for project status.
 See `todo.md` for current task breakdown.
 
 ### task overview
-Rather than completing the intended project design in one fell swoop, I'll will:
+Rather than completing the intended project design in one fell swoop, I will:
 - build the bare minimum for a new feature, 
 - implementing some sort of simulation or application of the new feature, 
 - refactor,
