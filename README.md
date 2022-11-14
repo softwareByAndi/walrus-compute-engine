@@ -2,9 +2,12 @@
 
 this engine is still in progress.  
 See `devlog.md` for project status.  
-See `todo.md` for current task breakdown.
+See `todo.md` for current task breakdown.  
 
-### task overview
+<br>
+<hr>
+
+# task overview
 Rather than completing the intended project design in one fell swoop, I will:
 - build the bare minimum for a new feature, 
 - implementing some sort of simulation or application of the new feature, 
@@ -27,8 +30,8 @@ Rather than completing the intended project design in one fell swoop, I will:
     - with some A.I. logic prototypes built and something to show for it, let's take the first step toward implementing the core of the physics engine. _( and therefore animations via F.E.M. physics! )_
     - We'll implement some basic particle physics for fluid/air & combustion simulations
 - We need to test the new particle physics on something...
-    - [ ] build an engine simulation using the new combustion physics
-      - _( ** this task might take some time... ** )_
+    - [ ] build an engine simulation using the new combustion physics  
+      _( ** this task might take some time... ** )_
     - [ ] build a plane simulation using the new engine & fluid physics
 - [ ] replace object-level F.E.Physics computation with custom A.I.:
     - At this point, the particle physics for this engine sim will take a lot of processing power that we won't have when implemented on a mass scale.
