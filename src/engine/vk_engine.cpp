@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <cassert>
 
 namespace walrus {
 
@@ -109,6 +110,14 @@ namespace walrus {
       _deviceInfo.clone(devicesInfos[selectedDeviceIndex]);
       _physicalDevice = _physicalDevices.at(selectedDeviceIndex);
       DeviceInfo::createLogicalDevice(_deviceInfo, _physicalDevice, &_device, _queues);
+
+      // TODO: refactor commands and queue logic to work with not-complete-support queue families.
+      assert(!_deviceInfo.queueData.empty() && "missing queues?");
+      assert(_queues.size() == _deviceInfo.queueData.size() && "uh oh... something's wrong with the queue setup...");
+      for (const auto &queue: _deviceInfo.queueData) {
+        assert(queue.support.isComplete() &&
+                 "Current logic only works with M1 chips or devices for which all queues have full support. Please request a refactor");
+      }
     }
   }
 
@@ -179,7 +188,8 @@ namespace walrus {
       }
 
       vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, nullptr);
-      _swapchainImages.clear();
+      assert(imageCount > 0 && "no images?");
+      assert(_swapchainImages.empty() && "swapchain re-creation not supported yet.");
       _swapchainImages.resize(imageCount);
       vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, _swapchainImages.data());
     }
