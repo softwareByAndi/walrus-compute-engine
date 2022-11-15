@@ -12,18 +12,19 @@ namespace walrus {
     ALL
   };
 
-
   class DeviceInfo {
   public:
 
     static std::vector<DeviceInfo>
     getDeviceInfos(VkInstance &instance, VkSurfaceKHR &vkSurface, std::vector<VkPhysicalDevice> *vkPhysicalDevices);
 
-    static std::vector<const char *> getExtensions() {
-      return {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        "VK_KHR_portability_subset"
-      };
+    static std::vector<const char *> getExtensions(DeviceTask task = DeviceTask::ALL) {
+      // TODO: only macOS needs the portability subset?
+      std::vector<const char *> extensions = {"VK_KHR_portability_subset"};
+      if (task == DeviceTask::GRAPHICS || task == DeviceTask::ALL) {
+        extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+      }
+      return extensions;
     }
 
     struct Support {

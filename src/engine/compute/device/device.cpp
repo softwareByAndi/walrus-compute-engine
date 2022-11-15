@@ -161,7 +161,7 @@ namespace walrus {
       nullptr,
       &extensionCount,
       availableExtensions.data());
-    const auto extensions = DeviceInfo::getExtensions();
+    const auto extensions = DeviceInfo::getExtensions(task);
     std::set<std::string> requiredExtensions(extensions.begin(), extensions.end());
     for (const auto &extension: availableExtensions) {
       requiredExtensions.erase(extension.extensionName);
@@ -235,7 +235,7 @@ namespace walrus {
 
     VkPhysicalDeviceFeatures deviceFeatures{};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
-    const auto extensions = DeviceInfo::getExtensions();
+    const auto extensions = DeviceInfo::getExtensions(deviceInfo.task);
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
