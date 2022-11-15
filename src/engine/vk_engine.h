@@ -37,6 +37,7 @@ namespace walrus {
 
     void runCompute();
 
+
     /// TASK NEUTRAL
     bool _isInitialized{false};
     DeviceTask _task = ALL;
@@ -50,7 +51,7 @@ namespace walrus {
     VkDebugUtilsMessengerEXT _debugMessenger = VK_NULL_HANDLE;
     const std::vector<const char *> _validationLayers = {"VK_LAYER_KHRONOS_validation"};
 
-    /// COMPUTE
+    /// CORE & COMPUTE
     VkInstance _instance = VK_NULL_HANDLE;
     VkDevice _device = VK_NULL_HANDLE;
     VkPhysicalDevice _physicalDevice = VK_NULL_HANDLE;
