@@ -1,7 +1,7 @@
 #ifndef WALRUS_COMPUTE_ENGINE_SWAPCHAIN_HPP
 #define WALRUS_COMPUTE_ENGINE_SWAPCHAIN_HPP
 
-#include "engine/window/window.hpp"
+#include "engine/rendering/window/window.hpp"
 
 #include "vk_types.h"
 #include <vector>

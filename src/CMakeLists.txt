@@ -8,12 +8,12 @@ add_executable(walrus_compute_engine
         pretty_io.cpp
         engine/vk_engine.cpp
         engine/vk_engine.h
-        engine/window/window.cpp
-        engine/window/window.hpp
         engine/device/device.cpp
         engine/device/device.hpp
         engine/commands/command.cpp
         engine/commands/command.hpp
+        engine/rendering/window/window.cpp
+        engine/rendering/window/window.hpp
         engine/rendering/swapchain/swapchain.cpp
         engine/rendering/swapchain/swapchain.hpp)
 

@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "engine/window/window.hpp"
+#include "engine/rendering/window/window.hpp"
 #include "engine/device/device.hpp"
 
 #include "vk_types.h"
