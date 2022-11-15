@@ -1,5 +1,6 @@
 #include "device.hpp"
 #include "pretty_io.hpp"
+#include "engine/swapchain/swapchain.hpp"
 
 #include <vk_initializers.h>
 
@@ -19,7 +20,7 @@ namespace walrus {
 
 
 
-  std::vector<DeviceInfo> DeviceInfo::getDeviceInfos(VkInstance &instance, VkSurfaceKHR &surface, std::vector<VkPhysicalDevice> *vkPhysicalDevices) {
+  std::vector<DeviceInfo> DeviceInfo::getDeviceInfos(VkInstance &instance, VkSurfaceKHR &vkSurface, std::vector<VkPhysicalDevice> *vkPhysicalDevices) {
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
     if (deviceCount == 0) {
@@ -30,7 +31,7 @@ namespace walrus {
     vkEnumeratePhysicalDevices(instance, &deviceCount, vkPhysicalDevices->data());
     std::vector<DeviceInfo> devices;
     for (auto &physicalDevice: *vkPhysicalDevices) {
-      devices.emplace_back(DeviceInfo{physicalDevice, &surface});
+      devices.emplace_back(DeviceInfo{physicalDevice, &vkSurface});
     }
     return devices;
   }
@@ -38,9 +39,24 @@ namespace walrus {
 
 
 
-  DeviceInfo::DeviceInfo(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *surface) {
-    init(vkPhysicalDevice, surface);
+  DeviceInfo::DeviceInfo(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface) {
+    init(vkPhysicalDevice, vkSurface);
   }
+
+
+
+
+  void DeviceInfo::init(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface) {
+    getPhysicalDeviceProperties(vkPhysicalDevice);
+    getQueueFamilyProperties(vkPhysicalDevice);
+    updateQueueSurfaceSupport(vkPhysicalDevice, vkSurface);
+    updateDeviceSupportSummary(vkPhysicalDevice, vkSurface);
+    selectMostSuitedQueue();
+    calculateDeviceScore(vkPhysicalDevice);
+  }
+
+
+
 
   void DeviceInfo::clone(DeviceInfo const &deviceInfo) {
     queueData.clear();
@@ -53,18 +69,6 @@ namespace walrus {
     _bestQueueIndex = deviceInfo._bestQueueIndex;
     _queueFamilies.clear();
     _queueFamilies = deviceInfo._queueFamilies;
-  }
-
-
-
-
-  void DeviceInfo::init(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *surface) {
-    getPhysicalDeviceProperties(vkPhysicalDevice);
-    getQueueFamilyProperties(vkPhysicalDevice);
-    updateQueueSurfaceSupport(vkPhysicalDevice, surface);
-    updateDeviceSupportSummary();
-    selectMostSuitedQueue();
-    calculateDeviceScore(vkPhysicalDevice);
   }
 
 
@@ -92,11 +96,11 @@ namespace walrus {
 
 
 
-  void DeviceInfo::updateQueueSurfaceSupport(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *surface) {
+  void DeviceInfo::updateQueueSurfaceSupport(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface) {
     for (unsigned int i = 0; i < queueData.size(); i++) {
       VkBool32 supportsSurface = 0;
-      if (surface != nullptr) {
-        vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice, i, *surface, &supportsSurface);
+      if (vkSurface != nullptr) {
+        vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice, i, *vkSurface, &supportsSurface);
       }
       queueData.at(i).support.surface = (supportsSurface > 0);
     }
@@ -105,11 +109,16 @@ namespace walrus {
 
 
 
-  void DeviceInfo::updateDeviceSupportSummary() {
+  void DeviceInfo::updateDeviceSupportSummary(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface) {
     for (auto &queue: queueData) {
       if (queue.support.graphics) { supportSummary.graphics = true; }
       if (queue.support.compute) { supportSummary.compute = true; }
       if (queue.support.surface) { supportSummary.surface = true; }
+    }
+    if (vkSurface != nullptr && Swapchain::querySwapchainSupport(vkPhysicalDevice, *vkSurface).isValid()) {
+      supportSummary.swapchain = true;
+    } else {
+      std::cerr << "swapchain not supported" << std::endl;
     }
   }
 
@@ -118,7 +127,7 @@ namespace walrus {
 
   void DeviceInfo::selectMostSuitedQueue() {
     _bestQueueIndex = -1;
-    int bestScore = 0;
+    uint32_t bestScore = 0;
     int i = 0;
     for (auto &queue: queueData) {
       queue.score = 0;
@@ -129,6 +138,7 @@ namespace walrus {
         (task == DeviceTask::GRAPHICS && !queue.support.surface) ||
         (task == DeviceTask::COMPUTE && !queue.support.compute) ||
         (task == DeviceTask::ALL && !queue.support.isComplete())) {
+        std::cerr << "queue not complete" << std::endl;
         queue.score = 0;
       }
       if (bestScore < queue.score) {
@@ -142,10 +152,9 @@ namespace walrus {
 
 
 
-  bool DeviceInfo::checkDeviceExtensionSupport(VkPhysicalDevice &vkPhysicalDevice) {
+  bool DeviceInfo::checkDeviceExtensionSupport(VkPhysicalDevice &vkPhysicalDevice) const {
     uint32_t extensionCount;
     vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, nullptr, &extensionCount, nullptr);
-
     std::vector<VkExtensionProperties> availableExtensions(extensionCount);
     vkEnumerateDeviceExtensionProperties(
       vkPhysicalDevice,
@@ -157,6 +166,11 @@ namespace walrus {
     for (const auto &extension: availableExtensions) {
       requiredExtensions.erase(extension.extensionName);
     }
+    if (task == DeviceTask::GRAPHICS || task == DeviceTask::ALL) {
+      if (!supportSummary.swapchain) {
+        return false;
+      }
+    }
     return requiredExtensions.empty();
   }
 
@@ -165,7 +179,10 @@ namespace walrus {
 
   void DeviceInfo::calculateDeviceScore(VkPhysicalDevice &vkPhysicalDevice) {
     score = 0;
-    if (!checkDeviceExtensionSupport(vkPhysicalDevice)) { return; }
+    if (!checkDeviceExtensionSupport(vkPhysicalDevice)) {
+      std::cerr << "device extension not supported" << std::endl;
+      return;
+    }
 
     // discrete gpus have significant performance advantage
     if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {

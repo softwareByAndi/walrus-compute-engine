@@ -1,11 +1,14 @@
 ﻿#include "vk_engine.h"
 
-#include <GLFW/glfw3.h>
+#include "engine/swapchain/swapchain.hpp"
 #include "vk_initializers.h"
 #include "pretty_io.hpp"
 
+#define GLFW_INCLUDE_VULKAN
+
+#include <GLFW/glfw3.h>
+
 #include <iostream>
-#include <map>
 #include <algorithm>
 
 namespace walrus {
@@ -85,8 +88,9 @@ namespace walrus {
     /// DEVICE
     {
       auto devicesInfos = DeviceInfo::getDeviceInfos(_instance, _surface, &_physicalDevices);
+      std::cout << std::endl;
       std::cout << "physical device count: " << _physicalDevices.size() << std::endl;
-      std::cout << "available devices: " << std::endl;
+      std::cout << "available devices: \n\n";
       for (auto deviceInfo: devicesInfos) {
         deviceInfo.print();
       }
@@ -108,24 +112,83 @@ namespace walrus {
     }
   }
 
+
+
+
   void VulkanEngine::init_swapchain() {
-    //  vkb::SwapchainBuilder swapchainBuilder{_chosenGPU, _device, _surface};
-    //  vkb::Swapchain vkbSwapchain = swapchainBuilder
-    //    .use_default_format_selection()
-    //    .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
-    //    .set_desired_extent(_windowExtent.width, _windowExtent.height)
-    //    .build()
-    //    .value();
-    //  _swapchain = vkbSwapchain.swapchain;
-    //  _swapchainImages = vkbSwapchain.get_images().value();
-    //  _swapchainImageViews = vkbSwapchain.get_image_views().value();
-    //  _swapchainImageFormat = vkbSwapchain.image_format;
+    Swapchain::SupportDetails swapchainSupportDetails = Swapchain::querySwapchainSupport(_physicalDevice, _surface);
+    auto vkSurfaceFormat = Swapchain::chooseSurfaceFormat(swapchainSupportDetails);
+    auto vkPresentMode = Swapchain::choosePresentationMode(swapchainSupportDetails);
+    auto vkExtent = Swapchain::chooseExtent(swapchainSupportDetails, _window);
+    _swapchainImageFormat = vkSurfaceFormat.format;
+    uint32_t imageCount = swapchainSupportDetails.capabilities.minImageCount + 1;
+    if (swapchainSupportDetails.capabilities.maxImageCount > 0 &&
+      imageCount > swapchainSupportDetails.capabilities.maxImageCount) {
+      imageCount = swapchainSupportDetails.capabilities.maxImageCount;
+    }
+
+    VkSwapchainCreateInfoKHR createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    createInfo.surface = _surface;
+    createInfo.minImageCount = imageCount;
+    createInfo.imageFormat = vkSurfaceFormat.format;
+    createInfo.imageColorSpace = vkSurfaceFormat.colorSpace;
+    createInfo.imageExtent = vkExtent;
+    createInfo.imageArrayLayers = 1; // always 1 unless creating stereoscopic 3D application
+    createInfo.preTransform = swapchainSupportDetails.capabilities.currentTransform; // 90deg, flip, etc...
+    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    createInfo.presentMode = vkPresentMode;
+    createInfo.clipped = VK_TRUE; // delete pixels that are covered by other pixels
+    createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+    /*
+      imageUsage = swapchain operations
+      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT:
+        - direct image rendering
+        - in the case of post-processing: VK_IMAGE_USAGE_TRANSFER_DST_BIT should be used
+      TODO: research Vulkan swapchain post processing
+    */
+    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+    /*
+      VK_SHARING_MODE_EXCLUSIVE:
+        - image is owned by one queue family at a time and ownership must be explicitly transferred before using it in another queue family.
+        - this option offers the best performance
+      VK_SHARING_MODE_CONCURRENT:
+        - images can be used across multiple queue families without explicit ownership transfers
+        - requires declaring in advance which queues will share ownership using `queueFamilyIndexCount` and `pQueueFamilyIndices`
+      TODO: cover ownership chapters to implement exclusive logic instead of concurrent logic
+    */
+    std::vector<uint32_t> queueIndices(_queues.size());
+    for (uint32_t i = 0; i < _queues.size(); i++) { queueIndices[i] = i; }
+    if (_queues.size() > 1) {
+      createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+      /// specify between which queue families image ownership will be shared. for now, image ownership will be shared across all queues.
+      createInfo.queueFamilyIndexCount = _queues.size();
+      createInfo.pQueueFamilyIndices = queueIndices.data();
+    } else {
+      createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+      createInfo.queueFamilyIndexCount = 0;
+      createInfo.pQueueFamilyIndices = nullptr;
+    }
+
+    if (vkCreateSwapchainKHR(_device, &createInfo, nullptr, &_swapchain) != VK_SUCCESS) {
+      throw std::runtime_error("unable to create swapchain...");
+    }
+
+    vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, nullptr);
+    _swapchainImages.clear();
+    _swapchainImages.resize(imageCount);
+    vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, _swapchainImages.data());
   }
+
+
+
 
   void VulkanEngine::destroy() {
     if (_isInitialized) {
-      //    vkDestroySwapchainKHR(_device, _swapchain, nullptr);
-      //    // destroy swapchain resources
+      vkDestroySwapchainKHR(_device, _swapchain, nullptr);
+      // destroy swapchain resources
       //    for (auto &_swapchainImageView: _swapchainImageViews) {
       //      vkDestroyImageView(_device, _swapchainImageView, nullptr);
       //    }

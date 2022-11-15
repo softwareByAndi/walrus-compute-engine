@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "engine/window/window.hpp"
-#include "device/device.hpp"
+#include "engine/device/device.hpp"
 
 #include "vk_types.h"
 #include <vector>

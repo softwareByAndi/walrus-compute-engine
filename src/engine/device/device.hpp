@@ -17,7 +17,7 @@ namespace walrus {
   public:
 
     static std::vector<DeviceInfo>
-    getDeviceInfos(VkInstance &instance, VkSurfaceKHR &surface, std::vector<VkPhysicalDevice> *vkPhysicalDevices);
+    getDeviceInfos(VkInstance &instance, VkSurfaceKHR &vkSurface, std::vector<VkPhysicalDevice> *vkPhysicalDevices);
 
     static std::vector<const char *> getExtensions() {
       return {
@@ -30,6 +30,7 @@ namespace walrus {
       bool graphics = false;
       bool compute = false;
       bool surface = false;
+      bool swapchain = false;
 
       [[nodiscard]] bool isComplete() const { return graphics && compute && surface; }
     };
@@ -50,11 +51,11 @@ namespace walrus {
 
     DeviceInfo() = default;
 
-    DeviceInfo(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *surface);
+    explicit DeviceInfo(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface = nullptr);
+
+    void init(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface = nullptr);
 
     void clone(DeviceInfo const &deviceInfo);
-
-    void init(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *surface);
 
     static void createLogicalDevice(DeviceInfo &deviceInfo,
                                     VkPhysicalDevice &vkPhysicalDevice,
@@ -73,13 +74,13 @@ namespace walrus {
 
     void getQueueFamilyProperties(VkPhysicalDevice &vkPhysicalDevice);
 
-    void updateQueueSurfaceSupport(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *surface);
+    void updateQueueSurfaceSupport(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface = nullptr);
 
-    void updateDeviceSupportSummary();
+    void updateDeviceSupportSummary(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface = nullptr);
 
     void selectMostSuitedQueue();
 
-    bool checkDeviceExtensionSupport(VkPhysicalDevice &vkPhysicalDevice);
+    bool checkDeviceExtensionSupport(VkPhysicalDevice &vkPhysicalDevice) const;
 
     void calculateDeviceScore(VkPhysicalDevice &vkPhysicalDevice);
   };
