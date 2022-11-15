@@ -12,7 +12,10 @@ add_executable(walrus_compute_engine
         vk_initializers.h
         pretty_io.hpp
         pretty_io.cpp
-        engine/swapchain/swapchain.cpp engine/swapchain/swapchain.hpp)
+        engine/swapchain/swapchain.cpp
+        engine/swapchain/swapchain.hpp
+        engine/commands/command.cpp
+        engine/commands/command.hpp)
 
 set_property(TARGET walrus_compute_engine PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:walrus_compute_engine>")
 

@@ -22,6 +22,8 @@ namespace walrus {
 
     void init_swapchain();
 
+    void init_commands();
+
     void destroy();
 
     void draw();
@@ -53,5 +55,8 @@ namespace walrus {
     VkFormat _swapchainImageFormat{};
     std::vector<VkImage> _swapchainImages{};
     std::vector<VkImageView> _swapchainImageViews{};
+
+    VkCommandPool _commandPool{};
+    VkCommandBuffer _commandBuffer{};
   };
 }
