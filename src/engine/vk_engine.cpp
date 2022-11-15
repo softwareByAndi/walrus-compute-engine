@@ -1,7 +1,7 @@
 ﻿#include "vk_engine.h"
 
 #include "engine/rendering/swapchain/swapchain.hpp"
-#include "engine/commands/command.hpp"
+#include "engine/compute/commands/command.hpp"
 #include "vk_initializers.h"
 #include "pretty_io.hpp"
 

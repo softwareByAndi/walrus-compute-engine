@@ -1,7 +1,7 @@
 #ifndef WALRUS_COMPUTE_ENGINE_COMMAND_HPP
 #define WALRUS_COMPUTE_ENGINE_COMMAND_HPP
 
-#include <vk_types.h>
+#include "vk_types.h"
 
 namespace walrus {
 

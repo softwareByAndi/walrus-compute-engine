@@ -10,8 +10,8 @@ add_executable(walrus_compute_engine
         engine/vk_engine.h
         engine/compute/device/device.cpp
         engine/compute/device/device.hpp
-        engine/commands/command.cpp
-        engine/commands/command.hpp
+        engine/compute/commands/command.cpp
+        engine/compute/commands/command.hpp
         engine/rendering/window/window.cpp
         engine/rendering/window/window.hpp
         engine/rendering/swapchain/swapchain.cpp
