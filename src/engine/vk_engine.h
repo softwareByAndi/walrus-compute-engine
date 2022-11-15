@@ -16,21 +16,16 @@ namespace walrus {
 
     ~VulkanEngine() { destroy(); }
 
-    //initializes everything in the engine
     void init();
 
-    // load the core vulkan structures
     void init_vulkan();
 
     void init_swapchain();
 
-    //shuts down the engine
     void destroy();
 
-    //draw loop
     void draw();
 
-    //run main loop
     void run();
 
   private:
