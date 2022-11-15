@@ -148,6 +148,33 @@ namespace walrus {
 
 
 
+  void VulkanEngine::init_commands() {
+    /// COMMAND POOL
+    {
+      assert(_device != VK_NULL_HANDLE && "device not setup");
+      assert(!_queues.empty() && !_deviceInfo.queueData.empty() && "missing queues?");
+      assert(_deviceInfo.queueData[0].support.compute &&
+               "current logic only supports queues with at least compute...");
+      assert(!(_task & DeviceTask::GRAPHICS) || _deviceInfo.queueData[0].support.isComplete() &&
+        "current logic only supports queues with complete support...");
+      auto createInfo = CommandPool::createInfo(0, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+      if (vkCreateCommandPool(_device, &createInfo, nullptr, &_commandPool) != VK_SUCCESS) {
+        throw std::runtime_error("unable to create command pool...");
+      }
+    }
+
+    /// COMMAND BUFFER
+    {
+      auto allocInfo = CommandBuffer::allocateInfo(_commandPool);
+      if (vkAllocateCommandBuffers(_device, &allocInfo, &_commandBuffer) != VK_SUCCESS) {
+        throw std::runtime_error("unable to allocate command buffer");
+      }
+    }
+  }
+
+
+
+
   void VulkanEngine::init_swapchain() {
     assert((_task & DeviceTask::GRAPHICS) && "cannot initialize swapchain for non-graphics task");
 
@@ -241,32 +268,6 @@ namespace walrus {
         if (vkCreateImageView(_device, &createInfo, nullptr, &_swapchainImageViews[i]) != VK_SUCCESS) {
           throw std::runtime_error("failed to create image view[" + std::to_string(i) + "]");
         }
-      }
-    }
-  }
-
-
-
-  void VulkanEngine::init_commands() {
-    /// COMMAND POOL
-    {
-      assert(_device != VK_NULL_HANDLE && "device not setup");
-      assert(!_queues.empty() && !_deviceInfo.queueData.empty() && "missing queues?");
-      assert(_deviceInfo.queueData[0].support.compute &&
-               "current logic only supports queues with at least compute...");
-      assert(!(_task & DeviceTask::GRAPHICS) || _deviceInfo.queueData[0].support.isComplete() &&
-        "current logic only supports queues with complete support...");
-      auto createInfo = CommandPool::createInfo(0, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-      if (vkCreateCommandPool(_device, &createInfo, nullptr, &_commandPool) != VK_SUCCESS) {
-        throw std::runtime_error("unable to create command pool...");
-      }
-    }
-
-    /// COMMAND BUFFER
-    {
-      auto allocInfo = CommandBuffer::allocateInfo(_commandPool);
-      if (vkAllocateCommandBuffers(_device, &allocInfo, &_commandBuffer) != VK_SUCCESS) {
-        throw std::runtime_error("unable to allocate command buffer");
       }
     }
   }
