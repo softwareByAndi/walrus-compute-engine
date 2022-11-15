@@ -1,21 +1,21 @@
 # Add source to this project's executable.
 add_executable(walrus_compute_engine
         main.cpp
+        vk_types.h
+        vk_initializers.cpp
+        vk_initializers.h
+        pretty_io.hpp
+        pretty_io.cpp
         engine/vk_engine.cpp
         engine/vk_engine.h
         engine/window/window.cpp
         engine/window/window.hpp
         engine/device/device.cpp
         engine/device/device.hpp
-        vk_types.h
-        vk_initializers.cpp
-        vk_initializers.h
-        pretty_io.hpp
-        pretty_io.cpp
-        engine/swapchain/swapchain.cpp
-        engine/swapchain/swapchain.hpp
         engine/commands/command.cpp
-        engine/commands/command.hpp)
+        engine/commands/command.hpp
+        engine/rendering/swapchain/swapchain.cpp
+        engine/rendering/swapchain/swapchain.hpp)
 
 set_property(TARGET walrus_compute_engine PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:walrus_compute_engine>")
 
