@@ -48,6 +48,7 @@ namespace walrus {
 
       std::vector<const char *> extensions = vkInit::defaults::getRequiredExtensions(_enableValidationLayers);
       if (_task & DeviceTask::GRAPHICS) {
+        // todo: const char * memory leak?
         auto winExt = Window::getRequiredExtensions(_enableValidationLayers);
         for (auto ext: winExt) {
           extensions.push_back(ext);

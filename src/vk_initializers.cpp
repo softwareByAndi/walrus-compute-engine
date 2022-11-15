@@ -32,6 +32,7 @@ namespace vkInit {
 
     std::vector<const char *> getRequiredExtensions(bool enableValidationLayers) {
       // TODO: portability extension is only required for macOS?
+      // TODO: const char * memory leak?
       std::vector<const char *> extensions = {
         VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
         VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
