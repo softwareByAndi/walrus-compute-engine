@@ -31,6 +31,11 @@ namespace walrus {
 
     void init_swapchain();
 
+    void init_default_renderpass();
+
+    void init_framebuffers();
+
+
     void draw();
 
     void runRender();
@@ -72,5 +77,7 @@ namespace walrus {
     std::vector<VkImage> _swapchainImages{};
     std::vector<VkImageView> _swapchainImageViews{};
 
+    VkRenderPass _renderPass = VK_NULL_HANDLE;
+    std::vector<VkFramebuffer> _framebuffers{};
   };
 }

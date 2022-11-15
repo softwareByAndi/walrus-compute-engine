@@ -22,17 +22,16 @@ namespace walrus {
       printTaskFeatures(_task);
       std::cout << "\n\n";
 
-      // load the core vulkan structures
       init_vulkan();
       init_commands();
       if (_task & DeviceTask::GRAPHICS) {
         init_swapchain();
+        init_default_renderpass();
+        init_framebuffers();
       }
-
-      //everything went fine
       _isInitialized = true;
     } else {
-      std::cout << "VulkanEngine is already initialized" << std::endl;
+      std::cout << io::to_color_string(io::RED, "VulkanEngine is already initialized") << std::endl;
     }
   }
 
@@ -275,13 +274,90 @@ namespace walrus {
 
 
 
+  void VulkanEngine::init_default_renderpass() {
+    assert(_swapchain != VK_NULL_HANDLE && "initialize swap chain before render pass");
+    assert(_renderPass == VK_NULL_HANDLE && "RenderPass re-initialization not supported yet");
+
+    VkAttachmentDescription colorAttachment{};
+    colorAttachment.format = _swapchainImageFormat;
+    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT; // No MSAA
+    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; // clear when attachment is loaded
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // store attachment after renderpass ends
+    // don't care about stencil
+    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    // don't know or care about starting layout
+    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    // after teh renderpass ends, the image hs to be on a layout ready for display
+    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    VkAttachmentReference attachmentRef{};
+    attachmentRef.attachment = 0; // indexes into _renderpass.pAttachments
+    attachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    // TODO: research sub pass
+    // 1 sub pass is minimum
+    VkSubpassDescription subpass = {};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &attachmentRef;
+
+    // TODO: refactor for depth test
+    VkRenderPassCreateInfo info{};
+    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    info.attachmentCount = 1;
+    info.pAttachments = &colorAttachment;
+    info.subpassCount = 1;
+    info.pSubpasses = &subpass;
+    if (vkCreateRenderPass(_device, &info, nullptr, &_renderPass) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create render pass");
+    }
+  }
+
+
+
+
+  void VulkanEngine::init_framebuffers() {
+    assert(_renderPass != VK_NULL_HANDLE && "initialize render pass before frame buffers");
+    assert(_swapchain != VK_NULL_HANDLE && "if renderpass is defined, then this should be too");
+    assert(!_swapchainImages.empty() && "can't create a frame buffer if no images...");
+    assert(!_swapchainImageViews.empty() && "can't create a frame buffer if no image views...");
+    assert(_framebuffers.empty() && "framebuffer re-initialization not supported yet");
+
+    VkFramebufferCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    info.pNext = nullptr;
+    info.renderPass = _renderPass;
+    info.attachmentCount = 1;
+    info.width = _window.getExtent().width;
+    info.height = _window.getExtent().height;
+    info.layers = 1;
+
+    // create a frame buffer for each image in the swapchain
+    const uint32_t imageCount = _swapchainImages.size();
+    _framebuffers.resize(imageCount);
+    for (size_t i = 0; i < imageCount; i++) {
+      info.pAttachments = &_swapchainImageViews[i];
+      if (vkCreateFramebuffer(_device, &info, nullptr, &_framebuffers[i]) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create framebuffer[" + std::to_string(i) + "]");
+      }
+    }
+  }
+
+
+
+
   void VulkanEngine::destroy() {
     if (_isInitialized) {
-      if (_swapchain != VK_NULL_HANDLE) {
+      if (_task & GRAPHICS) {
+        vkDestroyRenderPass(_device, _renderPass, nullptr);
         vkDestroySwapchainKHR(_device, _swapchain, nullptr);
-        // destroy swapchain resources
-        for (auto &_swapchainImageView: _swapchainImageViews) {
-          vkDestroyImageView(_device, _swapchainImageView, nullptr);
+        vkDestroySurfaceKHR(_instance, _surface, nullptr);
+        for (auto &framebuffer: _framebuffers) {
+          vkDestroyFramebuffer(_device, framebuffer, nullptr);
+        }
+        for (auto &imageView: _swapchainImageViews) {
+          vkDestroyImageView(_device, imageView, nullptr);
         }
       }
       vkDestroyCommandPool(_device, _commandPool, nullptr);
@@ -295,9 +371,6 @@ namespace walrus {
         if (destroyDebug != nullptr) {
           destroyDebug(_instance, _debugMessenger, nullptr);
         }
-      }
-      if (_surface != VK_NULL_HANDLE) {
-        vkDestroySurfaceKHR(_instance, _surface, nullptr);
       }
       vkDestroyInstance(_instance, nullptr);
       _window.destroy();

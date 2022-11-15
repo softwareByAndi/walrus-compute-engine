@@ -42,3 +42,16 @@ In this first chapter, we are only going to use a few image layouts
 - `VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL` : Image is on a layout optimal to be written into by rendering commands.
 - `VK_IMAGE_LAYOUT_PRESENT_SRC_KHR` : Image is on a layout that allows displaying the image on the screen.
 - `VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL` : (Used later) Image is on a format optimized to be read from shaders.
+
+### Image life cycle
+
+- UNDEFINED
+- render pass Begins
+- subpass 0 begins (transition to attachment optimal)
+- subpass 0 renders
+- subpass 0 ends
+- render pass ends (transition to present source)
+
+# Framebuffers
+
+act as the link between the attachments of the renderpass and the real images that they should render to.
