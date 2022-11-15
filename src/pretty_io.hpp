@@ -18,7 +18,7 @@ namespace io {
     BLUE,
     PURPLE,
     CYAN,
-    LIGHT_GRAY,
+    GRAY,
     DARK_GRAY,
     LIGHT_RED,
     LIGHT_GREEN,
@@ -26,7 +26,7 @@ namespace io {
     LIGHT_BLUE,
     LIGHT_PURPLE,
     LIGHT_CYAN,
-    WHITE,
+    LIGHT_GRAY,
     RESET,
   };
   const std::vector<std::string> COLORS = {
@@ -37,7 +37,7 @@ namespace io {
     ESC + "0;34m", // BLUE
     ESC + "0;35m", // PURPLE
     ESC + "0;36m", // CYAN
-    ESC + "0;37m", // LIGHT_GRAY
+    ESC + "0;37m", // GRAY
     ESC + "1;30m", // DARK_GRAY
     ESC + "1;31m", // LIGHT_RED
     ESC + "1;32m", // LIGHT_GREEN
@@ -45,7 +45,7 @@ namespace io {
     ESC + "1;34m", // LIGHT_BLUE
     ESC + "1;35m", // LIGHT_PURPLE
     ESC + "1;36m", // LIGHT_CYAN
-    ESC + "1;37m", // WHITE
+    ESC + "1;37m", // LIGHT_GRAY
     ESC + "0m", // RESET
   };
 
@@ -54,6 +54,8 @@ namespace io {
   std::string to_color_string(Color color, int num);
 
   void printExists(bool exists, std::string text, bool newLine = true);
+
+  void printColorTest();
 }
 
 #endif // WALRUS_COMPUTE_PRETTY_IO_HPP
