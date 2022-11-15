@@ -116,70 +116,97 @@ namespace walrus {
 
 
   void VulkanEngine::init_swapchain() {
-    Swapchain::SupportDetails swapchainSupportDetails = Swapchain::querySwapchainSupport(_physicalDevice, _surface);
-    auto vkSurfaceFormat = Swapchain::chooseSurfaceFormat(swapchainSupportDetails);
-    auto vkPresentMode = Swapchain::choosePresentationMode(swapchainSupportDetails);
-    auto vkExtent = Swapchain::chooseExtent(swapchainSupportDetails, _window);
-    _swapchainImageFormat = vkSurfaceFormat.format;
-    uint32_t imageCount = swapchainSupportDetails.capabilities.minImageCount + 1;
-    if (swapchainSupportDetails.capabilities.maxImageCount > 0 &&
-      imageCount > swapchainSupportDetails.capabilities.maxImageCount) {
-      imageCount = swapchainSupportDetails.capabilities.maxImageCount;
+    /// SWAPCHAIN
+    {
+      Swapchain::SupportDetails swapchainSupportDetails = Swapchain::querySwapchainSupport(_physicalDevice, _surface);
+      auto vkSurfaceFormat = Swapchain::chooseSurfaceFormat(swapchainSupportDetails);
+      auto vkPresentMode = Swapchain::choosePresentationMode(swapchainSupportDetails);
+      auto vkExtent = Swapchain::chooseExtent(swapchainSupportDetails, _window);
+      _swapchainImageFormat = vkSurfaceFormat.format;
+      uint32_t imageCount = swapchainSupportDetails.capabilities.minImageCount + 1;
+      if (swapchainSupportDetails.capabilities.maxImageCount > 0 &&
+        imageCount > swapchainSupportDetails.capabilities.maxImageCount) {
+        imageCount = swapchainSupportDetails.capabilities.maxImageCount;
+      }
+
+      VkSwapchainCreateInfoKHR createInfo{};
+      createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+      createInfo.surface = _surface;
+      createInfo.minImageCount = imageCount;
+      createInfo.imageFormat = vkSurfaceFormat.format;
+      createInfo.imageColorSpace = vkSurfaceFormat.colorSpace;
+      createInfo.imageExtent = vkExtent;
+      createInfo.imageArrayLayers = 1; // always 1 unless creating stereoscopic 3D application
+      createInfo.preTransform = swapchainSupportDetails.capabilities.currentTransform; // 90deg, flip, etc...
+      createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+      createInfo.presentMode = vkPresentMode;
+      createInfo.clipped = VK_TRUE; // delete pixels that are covered by other pixels
+      createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+      /*
+        imageUsage = swapchain operations
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT:
+          - direct image rendering
+          - in the case of post-processing: VK_IMAGE_USAGE_TRANSFER_DST_BIT should be used
+        TODO: research Vulkan swapchain post processing
+      */
+      createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+      /*
+        VK_SHARING_MODE_EXCLUSIVE:
+          - image is owned by one queue family at a time and ownership must be explicitly transferred before using it in another queue family.
+          - this option offers the best performance
+        VK_SHARING_MODE_CONCURRENT:
+          - images can be used across multiple queue families without explicit ownership transfers
+          - requires declaring in advance which queues will share ownership using `queueFamilyIndexCount` and `pQueueFamilyIndices`
+        TODO: cover ownership chapters to implement exclusive logic instead of concurrent logic
+      */
+      std::vector<uint32_t> queueIndices(_queues.size());
+      for (uint32_t i = 0; i < _queues.size(); i++) { queueIndices[i] = i; }
+      if (_queues.size() > 1) {
+        createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        /// specify between which queue families image ownership will be shared. for now, image ownership will be shared across all queues.
+        createInfo.queueFamilyIndexCount = _queues.size();
+        createInfo.pQueueFamilyIndices = queueIndices.data();
+      } else {
+        createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        createInfo.queueFamilyIndexCount = 0;
+        createInfo.pQueueFamilyIndices = nullptr;
+      }
+
+      if (vkCreateSwapchainKHR(_device, &createInfo, nullptr, &_swapchain) != VK_SUCCESS) {
+        throw std::runtime_error("unable to create swapchain...");
+      }
+
+      vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, nullptr);
+      _swapchainImages.clear();
+      _swapchainImages.resize(imageCount);
+      vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, _swapchainImages.data());
     }
 
-    VkSwapchainCreateInfoKHR createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = _surface;
-    createInfo.minImageCount = imageCount;
-    createInfo.imageFormat = vkSurfaceFormat.format;
-    createInfo.imageColorSpace = vkSurfaceFormat.colorSpace;
-    createInfo.imageExtent = vkExtent;
-    createInfo.imageArrayLayers = 1; // always 1 unless creating stereoscopic 3D application
-    createInfo.preTransform = swapchainSupportDetails.capabilities.currentTransform; // 90deg, flip, etc...
-    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    createInfo.presentMode = vkPresentMode;
-    createInfo.clipped = VK_TRUE; // delete pixels that are covered by other pixels
-    createInfo.oldSwapchain = VK_NULL_HANDLE;
-
-    /*
-      imageUsage = swapchain operations
-      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT:
-        - direct image rendering
-        - in the case of post-processing: VK_IMAGE_USAGE_TRANSFER_DST_BIT should be used
-      TODO: research Vulkan swapchain post processing
-    */
-    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-    /*
-      VK_SHARING_MODE_EXCLUSIVE:
-        - image is owned by one queue family at a time and ownership must be explicitly transferred before using it in another queue family.
-        - this option offers the best performance
-      VK_SHARING_MODE_CONCURRENT:
-        - images can be used across multiple queue families without explicit ownership transfers
-        - requires declaring in advance which queues will share ownership using `queueFamilyIndexCount` and `pQueueFamilyIndices`
-      TODO: cover ownership chapters to implement exclusive logic instead of concurrent logic
-    */
-    std::vector<uint32_t> queueIndices(_queues.size());
-    for (uint32_t i = 0; i < _queues.size(); i++) { queueIndices[i] = i; }
-    if (_queues.size() > 1) {
-      createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-      /// specify between which queue families image ownership will be shared. for now, image ownership will be shared across all queues.
-      createInfo.queueFamilyIndexCount = _queues.size();
-      createInfo.pQueueFamilyIndices = queueIndices.data();
-    } else {
-      createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-      createInfo.queueFamilyIndexCount = 0;
-      createInfo.pQueueFamilyIndices = nullptr;
+    /// IMAGE VIEWS
+    {
+      _swapchainImageViews.resize(_swapchainImages.size());
+      for (size_t i = 0; i < _swapchainImages.size(); i++) {
+        VkImageViewCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        createInfo.image = _swapchainImages[i];
+        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        createInfo.format = _swapchainImageFormat;
+        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        createInfo.subresourceRange.baseMipLevel = 0;
+        createInfo.subresourceRange.levelCount = 1;
+        createInfo.subresourceRange.baseArrayLayer = 0;
+        createInfo.subresourceRange.layerCount = 1;
+        if (vkCreateImageView(_device, &createInfo, nullptr, &_swapchainImageViews[i]) != VK_SUCCESS) {
+          throw std::runtime_error("failed to create image views...");
+        }
+      }
     }
-
-    if (vkCreateSwapchainKHR(_device, &createInfo, nullptr, &_swapchain) != VK_SUCCESS) {
-      throw std::runtime_error("unable to create swapchain...");
-    }
-
-    vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, nullptr);
-    _swapchainImages.clear();
-    _swapchainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, _swapchainImages.data());
   }
 
 
@@ -189,9 +216,9 @@ namespace walrus {
     if (_isInitialized) {
       vkDestroySwapchainKHR(_device, _swapchain, nullptr);
       // destroy swapchain resources
-      //    for (auto &_swapchainImageView: _swapchainImageViews) {
-      //      vkDestroyImageView(_device, _swapchainImageView, nullptr);
-      //    }
+      for (auto &_swapchainImageView: _swapchainImageViews) {
+        vkDestroyImageView(_device, _swapchainImageView, nullptr);
+      }
       vkDestroyDevice(_device, nullptr);
       if (_enableValidationLayers) {
         /// DESTROY DEBUG MESSENGER
