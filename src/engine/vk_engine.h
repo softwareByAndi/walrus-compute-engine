@@ -12,11 +12,11 @@ namespace walrus {
   class VulkanEngine {
   public:
 
-    VulkanEngine() { init(); };
+    explicit VulkanEngine(DeviceTask task = DeviceTask::ALL) { init(task); };
 
     ~VulkanEngine() { destroy(); }
 
-    void init();
+    void init(DeviceTask task = DeviceTask::ALL);
 
     void init_vulkan();
 
@@ -31,6 +31,12 @@ namespace walrus {
     void run();
 
   private:
+
+    void runRender();
+
+    void runCompute();
+
+
 #ifdef NDEBUG
     const bool _enableValidationLayers = false;
 #else
@@ -44,6 +50,8 @@ namespace walrus {
 
     Window _window{800, 600, "Vulkan Window"};
     VkSurfaceKHR _surface = VK_NULL_HANDLE;
+
+    DeviceTask _task = DeviceTask::ALL;
 
     VkDevice _device = VK_NULL_HANDLE;
     VkPhysicalDevice _physicalDevice = VK_NULL_HANDLE;

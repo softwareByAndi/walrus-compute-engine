@@ -2,7 +2,7 @@
 #include "pretty_io.hpp"
 
 #include <iostream>
-#include <map>
+#include <iterator>
 
 namespace vkInit {
 
@@ -29,6 +29,18 @@ namespace vkInit {
 
 
   namespace defaults {
+
+    std::vector<const char *> getRequiredExtensions(bool enableValidationLayers) {
+      // TODO: portability extension is only required for macOS?
+      std::vector<const char *> extensions = {
+        VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
+        VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
+      };
+      if (enableValidationLayers) {
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+      }
+      return extensions;
+    }
 
     VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
       VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

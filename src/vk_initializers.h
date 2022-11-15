@@ -8,9 +8,10 @@ namespace vkInit {
 
   bool checkValidationLayerSupport(const std::vector<const char *> &validationLayers);
 
-  uint32_t rateDeviceSuitability(const VkPhysicalDevice &device);
 
   namespace defaults {
+
+    std::vector<const char *> getRequiredExtensions(bool enableValidationLayers = true);
 
     VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
       VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

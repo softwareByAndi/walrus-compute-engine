@@ -16,7 +16,7 @@ namespace walrus {
   public:
 
     static std::vector<DeviceInfo>
-    getDeviceInfos(VkInstance &instance, VkSurfaceKHR &vkSurface, std::vector<VkPhysicalDevice> *vkPhysicalDevices);
+    getDeviceInfos(VkInstance &instance, VkSurfaceKHR &vkSurface, std::vector<VkPhysicalDevice> *vkPhysicalDevices, DeviceTask deviceTask = DeviceTask::ALL);
 
     static std::vector<const char *> getExtensions(DeviceTask task = DeviceTask::ALL) {
       // TODO: only macOS needs the portability subset?
@@ -52,9 +52,9 @@ namespace walrus {
 
     DeviceInfo() = default;
 
-    explicit DeviceInfo(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface = nullptr);
+    explicit DeviceInfo(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface, DeviceTask deviceTask = DeviceTask::ALL);
 
-    void init(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface = nullptr);
+    void init(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface, DeviceTask deviceTask = DeviceTask::ALL);
 
     void clone(DeviceInfo const &deviceInfo);
 
@@ -75,9 +75,9 @@ namespace walrus {
 
     void getQueueFamilyProperties(VkPhysicalDevice &vkPhysicalDevice);
 
-    void updateQueueSurfaceSupport(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface = nullptr);
+    void updateQueueSurfaceSupport(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface);
 
-    void updateDeviceSupportSummary(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface = nullptr);
+    void updateDeviceSupportSummary(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface);
 
     void selectMostSuitedQueue();
 

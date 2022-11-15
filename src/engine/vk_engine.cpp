@@ -10,16 +10,24 @@
 
 #include <iostream>
 #include <algorithm>
+#include <iterator>
 #include <cassert>
 
 namespace walrus {
 
-  void VulkanEngine::init() {
+  void VulkanEngine::init(DeviceTask task) {
     if (!_isInitialized) {
+      _task = task;
+      std::cout << "\nenabled features:";
+      printTaskFeatures(_task);
+      std::cout << "\n\n";
+
       // load the core vulkan structures
       init_vulkan();
-      init_swapchain();
       init_commands();
+      if (_task & DeviceTask::GRAPHICS) {
+        init_swapchain();
+      }
 
       //everything went fine
       _isInitialized = true;
@@ -38,13 +46,19 @@ namespace walrus {
       appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
       appInfo.apiVersion = VK_API_VERSION_1_3;
 
-      auto extensions = Window::getRequiredExtensions(_enableValidationLayers);
+      std::vector<const char *> extensions = vkInit::defaults::getRequiredExtensions(_enableValidationLayers);
+      if (_task & DeviceTask::GRAPHICS) {
+        auto winExt = Window::getRequiredExtensions(_enableValidationLayers);
+        for (auto ext: winExt) {
+          extensions.push_back(ext);
+        }
+      }
       // FIXME: check extension support
       VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = vkInit::defaults::debugMessengerCreateInfo();
       VkInstanceCreateInfo createInfo{};
       createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
       createInfo.pApplicationInfo = &appInfo;
-      createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR; // ADD FLAG FOR M1
+      createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR; // TODO: portability flag is only needed for macOS
       createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
       createInfo.ppEnabledExtensionNames = extensions.data();
       createInfo.enabledLayerCount = 0;
@@ -65,7 +79,9 @@ namespace walrus {
     }
 
     /// SURFACE
-    _window.createWindowSurface(_instance, &_surface);
+    if (_task & DeviceTask::GRAPHICS) {
+      _window.createWindowSurface(_instance, &_surface);
+    }
 
     /// DEBUG MESSENGER
     if (_enableValidationLayers) {
@@ -89,7 +105,7 @@ namespace walrus {
 
     /// DEVICE
     {
-      auto devicesInfos = DeviceInfo::getDeviceInfos(_instance, _surface, &_physicalDevices);
+      auto devicesInfos = DeviceInfo::getDeviceInfos(_instance, _surface, &_physicalDevices, _task);
       std::cout << std::endl;
       std::cout << "physical device count: " << _physicalDevices.size() << std::endl;
       std::cout << "available devices: \n\n";
@@ -115,9 +131,13 @@ namespace walrus {
       // TODO: refactor commands and queue logic to work with not-complete-support queue families.
       assert(!_deviceInfo.queueData.empty() && "missing queues?");
       assert(_queues.size() == _deviceInfo.queueData.size() && "uh oh... something's wrong with the queue setup...");
+      bool graphics = _task & DeviceTask::GRAPHICS;
+      bool compute = _task & DeviceTask::COMPUTE;
       for (const auto &queue: _deviceInfo.queueData) {
-        assert(queue.support.isComplete() &&
-                 "Current logic only works with M1 chips or devices for which all queues have full support. Please request a refactor");
+        assert(!compute || queue.support.compute &&
+          "for current logic, all queues must support the device specified task");
+        assert(!graphics || queue.support.isComplete() &&
+          "for current logic, all queues must support the device specified task");
       }
     }
   }
@@ -126,6 +146,8 @@ namespace walrus {
 
 
   void VulkanEngine::init_swapchain() {
+    assert((_task & DeviceTask::GRAPHICS) && "cannot initialize swapchain for non-graphics task");
+
     /// SWAPCHAIN
     {
       Swapchain::SupportDetails swapchainSupportDetails = Swapchain::querySwapchainSupport(_physicalDevice, _surface);
@@ -227,8 +249,10 @@ namespace walrus {
     {
       assert(_device != VK_NULL_HANDLE && "device not setup");
       assert(!_queues.empty() && !_deviceInfo.queueData.empty() && "missing queues?");
-      assert(_deviceInfo.queueData[0].support.isComplete() &&
-               "current logic only supports queues with complete support...");
+      assert(_deviceInfo.queueData[0].support.compute &&
+               "current logic only supports queues with at least compute...");
+      assert(!(_task & DeviceTask::GRAPHICS) || _deviceInfo.queueData[0].support.isComplete() &&
+        "current logic only supports queues with complete support...");
       auto createInfo = CommandPool::createInfo(0, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
       if (vkCreateCommandPool(_device, &createInfo, nullptr, &_commandPool) != VK_SUCCESS) {
         throw std::runtime_error("unable to create command pool...");
@@ -249,12 +273,14 @@ namespace walrus {
 
   void VulkanEngine::destroy() {
     if (_isInitialized) {
-      vkDestroyCommandPool(_device, _commandPool, nullptr);
-      vkDestroySwapchainKHR(_device, _swapchain, nullptr);
-      // destroy swapchain resources
-      for (auto &_swapchainImageView: _swapchainImageViews) {
-        vkDestroyImageView(_device, _swapchainImageView, nullptr);
+      if (_swapchain != VK_NULL_HANDLE) {
+        vkDestroySwapchainKHR(_device, _swapchain, nullptr);
+        // destroy swapchain resources
+        for (auto &_swapchainImageView: _swapchainImageViews) {
+          vkDestroyImageView(_device, _swapchainImageView, nullptr);
+        }
       }
+      vkDestroyCommandPool(_device, _commandPool, nullptr);
       vkDestroyDevice(_device, nullptr);
       if (_enableValidationLayers) {
         /// DESTROY DEBUG MESSENGER
@@ -266,7 +292,9 @@ namespace walrus {
           destroyDebug(_instance, _debugMessenger, nullptr);
         }
       }
-      vkDestroySurfaceKHR(_instance, _surface, nullptr);
+      if (_surface != VK_NULL_HANDLE) {
+        vkDestroySurfaceKHR(_instance, _surface, nullptr);
+      }
       vkDestroyInstance(_instance, nullptr);
       _window.destroy();
       _isInitialized = false;
@@ -278,11 +306,27 @@ namespace walrus {
   }
 
   void VulkanEngine::run() {
+    if (_task & DeviceTask::GRAPHICS) {
+      runRender();
+    } else if (_task & DeviceTask::COMPUTE){
+      runCompute();
+    } else {
+      throw std::runtime_error("only graphics and compute tasks are currently supported");
+    }
+  }
+
+  void VulkanEngine::runRender() {
     while (!_window.shouldClose()) {
       glfwPollEvents();
     }
-    //    vkDeviceWaitIdle(_device);
   }
 
+  void VulkanEngine::runCompute() {
+    bool done = false;
+    while(!done) {
+      std::cout << io::to_color_string(io::Color::CYAN, "\nRUN COMPUTE\n\n");
+      done = true;
+    }
+  }
 
 }

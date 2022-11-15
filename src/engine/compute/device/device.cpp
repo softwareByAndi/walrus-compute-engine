@@ -20,7 +20,11 @@ namespace walrus {
 
 
 
-  std::vector<DeviceInfo> DeviceInfo::getDeviceInfos(VkInstance &instance, VkSurfaceKHR &vkSurface, std::vector<VkPhysicalDevice> *vkPhysicalDevices) {
+  std::vector<DeviceInfo> DeviceInfo::getDeviceInfos(VkInstance &instance,
+                                                     VkSurfaceKHR &vkSurface,
+                                                     std::vector<VkPhysicalDevice> *vkPhysicalDevices,
+                                                     DeviceTask deviceTask
+  ) {
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
     if (deviceCount == 0) {
@@ -31,7 +35,7 @@ namespace walrus {
     vkEnumeratePhysicalDevices(instance, &deviceCount, vkPhysicalDevices->data());
     std::vector<DeviceInfo> devices;
     for (auto &physicalDevice: *vkPhysicalDevices) {
-      devices.emplace_back(DeviceInfo{physicalDevice, &vkSurface});
+      devices.emplace_back(DeviceInfo{physicalDevice, vkSurface, deviceTask});
     }
     return devices;
   }
@@ -39,14 +43,15 @@ namespace walrus {
 
 
 
-  DeviceInfo::DeviceInfo(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface) {
-    init(vkPhysicalDevice, vkSurface);
+  DeviceInfo::DeviceInfo(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface, DeviceTask deviceTask) {
+    init(vkPhysicalDevice, vkSurface, deviceTask);
   }
 
 
 
 
-  void DeviceInfo::init(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface) {
+  void DeviceInfo::init(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface, DeviceTask deviceTask) {
+    task = deviceTask;
     getPhysicalDeviceProperties(vkPhysicalDevice);
     getQueueFamilyProperties(vkPhysicalDevice);
     updateQueueSurfaceSupport(vkPhysicalDevice, vkSurface);
@@ -96,11 +101,11 @@ namespace walrus {
 
 
 
-  void DeviceInfo::updateQueueSurfaceSupport(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface) {
+  void DeviceInfo::updateQueueSurfaceSupport(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface) {
     for (unsigned int i = 0; i < queueData.size(); i++) {
       VkBool32 supportsSurface = 0;
-      if (vkSurface != nullptr) {
-        vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice, i, *vkSurface, &supportsSurface);
+      if (vkSurface != VK_NULL_HANDLE) {
+        vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice, i, vkSurface, &supportsSurface);
       }
       queueData.at(i).support.surface = (supportsSurface > 0);
     }
@@ -109,15 +114,15 @@ namespace walrus {
 
 
 
-  void DeviceInfo::updateDeviceSupportSummary(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR *vkSurface) {
+  void DeviceInfo::updateDeviceSupportSummary(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface) {
     for (auto &queue: queueData) {
       if (queue.support.graphics) { supportSummary.graphics = true; }
       if (queue.support.compute) { supportSummary.compute = true; }
       if (queue.support.surface) { supportSummary.surface = true; }
     }
-    if (vkSurface != nullptr && Swapchain::querySwapchainSupport(vkPhysicalDevice, *vkSurface).isValid()) {
+    if (vkSurface != VK_NULL_HANDLE && Swapchain::querySwapchainSupport(vkPhysicalDevice, vkSurface).isValid()) {
       supportSummary.swapchain = true;
-    } else {
+    } else if (task & DeviceTask::GRAPHICS) {
       std::cerr << "swapchain not supported" << std::endl;
     }
   }
