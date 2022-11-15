@@ -10,13 +10,14 @@
 namespace walrus {
 
   class VulkanEngine {
+
   public:
 
-    explicit VulkanEngine(DeviceTask task = DeviceTask::ALL) { init(task); };
+    explicit VulkanEngine(DeviceTask task = ALL) { init(task); };
 
     ~VulkanEngine() { destroy(); }
 
-    void init(DeviceTask task = DeviceTask::ALL);
+    void init(DeviceTask task = ALL);
 
     void init_vulkan();
 
@@ -36,35 +37,39 @@ namespace walrus {
 
     void runCompute();
 
+    /// TASK NEUTRAL
+    bool _isInitialized{false};
+    DeviceTask _task = ALL;
 
+    /// VALIDATION & DEBUG
 #ifdef NDEBUG
     const bool _enableValidationLayers = false;
 #else
     const bool _enableValidationLayers = true;
 #endif
-    bool _isInitialized{false};
-    int _frameNumber{0};
-    VkInstance _instance = VK_NULL_HANDLE;
     VkDebugUtilsMessengerEXT _debugMessenger = VK_NULL_HANDLE;
     const std::vector<const char *> _validationLayers = {"VK_LAYER_KHRONOS_validation"};
 
-    Window _window{800, 600, "Vulkan Window"};
-    VkSurfaceKHR _surface = VK_NULL_HANDLE;
-
-    DeviceTask _task = DeviceTask::ALL;
-
+    /// COMPUTE
+    VkInstance _instance = VK_NULL_HANDLE;
     VkDevice _device = VK_NULL_HANDLE;
     VkPhysicalDevice _physicalDevice = VK_NULL_HANDLE;
     DeviceInfo _deviceInfo{};
     std::vector<VkQueue> _queues{};
     std::vector<VkPhysicalDevice> _physicalDevices{};
 
+    VkCommandPool _commandPool{};
+    VkCommandBuffer _commandBuffer{};
+
+    /// RENDERING
+    int _frameNumber{0};
+    Window _window{800, 600, "Vulkan Window"};
+    VkSurfaceKHR _surface = VK_NULL_HANDLE;
+
     VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
     VkFormat _swapchainImageFormat{};
     std::vector<VkImage> _swapchainImages{};
     std::vector<VkImageView> _swapchainImageViews{};
 
-    VkCommandPool _commandPool{};
-    VkCommandBuffer _commandBuffer{};
   };
 }
