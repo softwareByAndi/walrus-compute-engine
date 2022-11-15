@@ -5,7 +5,6 @@
 #include "pretty_io.hpp"
 
 #define GLFW_INCLUDE_VULKAN
-
 #include <GLFW/glfw3.h>
 
 #include <iostream>
@@ -213,7 +212,7 @@ namespace walrus {
         createInfo.subresourceRange.baseArrayLayer = 0;
         createInfo.subresourceRange.layerCount = 1;
         if (vkCreateImageView(_device, &createInfo, nullptr, &_swapchainImageViews[i]) != VK_SUCCESS) {
-          throw std::runtime_error("failed to create image views...");
+          throw std::runtime_error("failed to create image view[" + std::to_string(i) + "]");
         }
       }
     }
