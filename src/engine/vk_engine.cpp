@@ -140,7 +140,7 @@ namespace walrus {
         assert(!compute || queue.support.compute &&
           "for current logic, all queues must support the device specified task");
         assert(!graphics || queue.support.isComplete() &&
-          "for current logic, all queues must support the device specified task");
+          "for current logic, all graphics tasks must have complete support");
       }
     }
   }
