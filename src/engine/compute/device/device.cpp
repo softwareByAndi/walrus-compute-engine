@@ -12,8 +12,8 @@
 namespace walrus {
 
   void printTaskFeatures(DeviceTask &task) {
-    io::printExists(task & DeviceTask::GRAPHICS, "graphics", false);
-    io::printExists(task & DeviceTask::COMPUTE, "compute", false);
+    io::printExists(task & GRAPHICS, "graphics", false);
+    io::printExists(task & COMPUTE, "compute", false);
   }
 
   DeviceInfo::QueueFamilyData::QueueFamilyData(VkQueueFamilyProperties &vkProperties) {
@@ -25,10 +25,11 @@ namespace walrus {
 
 
 
-  std::vector<DeviceInfo> DeviceInfo::getDeviceInfos(VkInstance &instance,
-                                                     VkSurfaceKHR &vkSurface,
-                                                     std::vector<VkPhysicalDevice> *vkPhysicalDevices,
-                                                     DeviceTask deviceTask
+  std::vector<DeviceInfo> DeviceInfo::getDeviceInfos(
+    VkInstance &instance,
+    std::vector<VkPhysicalDevice> *vkPhysicalDevices,
+    VkSurfaceKHR vkSurface,
+    DeviceTask deviceTask
   ) {
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -48,19 +49,19 @@ namespace walrus {
 
 
 
-  DeviceInfo::DeviceInfo(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface, DeviceTask deviceTask) {
+  DeviceInfo::DeviceInfo(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR vkSurface, DeviceTask deviceTask) {
     init(vkPhysicalDevice, vkSurface, deviceTask);
   }
 
 
 
 
-  void DeviceInfo::init(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface, DeviceTask deviceTask) {
+  void DeviceInfo::init(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR vkSurface, DeviceTask deviceTask) {
     task = deviceTask;
     getPhysicalDeviceProperties(vkPhysicalDevice);
     getQueueFamilyProperties(vkPhysicalDevice);
-    updateQueueSurfaceSupport(vkPhysicalDevice, vkSurface);
-    updateDeviceSupportSummary(vkPhysicalDevice, vkSurface);
+    updateQueueSurfaceSupport(vkPhysicalDevice, (task & GRAPHICS) ? vkSurface : VK_NULL_HANDLE);
+    updateDeviceSupportSummary(vkPhysicalDevice, (task & GRAPHICS) ? vkSurface : VK_NULL_HANDLE);
     calculateDeviceScore(vkPhysicalDevice);
   }
 
@@ -105,20 +106,20 @@ namespace walrus {
 
 
 
-  void DeviceInfo::updateQueueSurfaceSupport(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface) {
+  void DeviceInfo::updateQueueSurfaceSupport(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR vkSurface) {
     for (unsigned int i = 0; i < queueData.size(); i++) {
       VkBool32 supportsSurface = 0;
       if (vkSurface != VK_NULL_HANDLE) {
         vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice, i, vkSurface, &supportsSurface);
       }
-      queueData.at(i).support.surface = (supportsSurface > 0);
+      queueData.at(i).support.surface = supportsSurface;
     }
   }
 
 
 
 
-  void DeviceInfo::updateDeviceSupportSummary(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface) {
+  void DeviceInfo::updateDeviceSupportSummary(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR vkSurface) {
     for (auto &queue: queueData) {
       if (queue.support.graphics) { supportSummary.graphics = true; }
       if (queue.support.compute) { supportSummary.compute = true; }
@@ -126,8 +127,6 @@ namespace walrus {
     }
     if (vkSurface != VK_NULL_HANDLE && Swapchain::querySwapchainSupport(vkPhysicalDevice, vkSurface).isValid()) {
       supportSummary.swapchain = true;
-    } else if (task & DeviceTask::GRAPHICS) {
-      std::cerr << "swapchain not supported" << std::endl;
     }
   }
 
@@ -143,9 +142,9 @@ namespace walrus {
       if (queue.support.graphics) { queue.score += 1; }
       if (queue.support.compute) { queue.score += 1; }
       if (queue.support.surface) { queue.score += 1; }
-      if ((task & DeviceTask::GRAPHICS && (!queue.support.graphics || !queue.support.surface)) ||
-        (task & DeviceTask::COMPUTE && !queue.support.compute) ||
-        (task == DeviceTask::ALL && !queue.support.isComplete())) {
+      if ((task & GRAPHICS && (!queue.support.graphics || !queue.support.surface)) ||
+        (task & COMPUTE && !queue.support.compute) ||
+        (task == ALL && !queue.support.isComplete())) {
         std::cerr << "queue not complete" << std::endl;
         queue.score = 0;
       }
@@ -174,7 +173,7 @@ namespace walrus {
     for (const auto &extension: availableExtensions) {
       requiredExtensions.erase(extension.extensionName);
     }
-    if (task & DeviceTask::GRAPHICS) {
+    if (task & GRAPHICS) {
       if (!supportSummary.swapchain) {
         return false;
       }
@@ -197,7 +196,7 @@ namespace walrus {
       score += 1000;
     }
     // TODO : come up with better metrics
-    if (task & DeviceTask::GRAPHICS) {
+    if (task & GRAPHICS) {
       // maximum possible size of textures affects graphics quality
       score += properties.limits.maxImageDimension2D / 10;
     }
@@ -267,13 +266,13 @@ namespace walrus {
 
 
   void DeviceInfo::print() {
-    std::cout << io::to_color_string(io::Color::LIGHT_GRAY, "device name:   ") << properties.deviceName << std::endl;
-    std::cout << io::to_color_string(io::Color::LIGHT_GRAY, "device score:  ") << score << std::endl;
-    std::cout << io::to_color_string(io::Color::LIGHT_GRAY, "declared task(s): ");
+    std::cout << io::to_color_string(io::LIGHT_GRAY, "device name:   ") << properties.deviceName << std::endl;
+    std::cout << io::to_color_string(io::LIGHT_GRAY, "device score:  ") << score << std::endl;
+    std::cout << io::to_color_string(io::LIGHT_GRAY, "declared task(s): ");
     printTaskFeatures(task);
     std::cout << std::endl;
     for (unsigned int i = 0; i < queueData.size(); i++) {
-      std::cout << io::COLORS[io::Color::LIGHT_GRAY] << "queueFamily " << i << " : ";
+      std::cout << io::COLORS[io::LIGHT_GRAY] << "queueFamily " << i << " : ";
       io::printExists(queueData[i].support.graphics, "graphics", false);
       io::printExists(queueData[i].support.compute, "compute", false);
       io::printExists(queueData[i].support.surface, "surface", false);

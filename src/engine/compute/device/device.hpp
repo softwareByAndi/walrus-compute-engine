@@ -18,13 +18,18 @@ namespace walrus {
   public:
 
     static std::vector<DeviceInfo>
-    getDeviceInfos(VkInstance &instance, VkSurfaceKHR &vkSurface, std::vector<VkPhysicalDevice> *vkPhysicalDevices, DeviceTask deviceTask = DeviceTask::ALL);
+    getDeviceInfos(
+      VkInstance &instance,
+      std::vector<VkPhysicalDevice> *vkPhysicalDevices,
+      VkSurfaceKHR vkSurface = VK_NULL_HANDLE,
+      DeviceTask deviceTask = ALL
+    );
 
-    static std::vector<const char *> getExtensions(DeviceTask task = DeviceTask::ALL) {
+    static std::vector<const char *> getExtensions(DeviceTask task = ALL) {
       // TODO: only macOS needs the portability subset?
       // TODO: const char * memory leak?
-      std::vector<const char *> extensions = { "VK_KHR_portability_subset"};
-      if (task & DeviceTask::GRAPHICS) {
+      std::vector<const char *> extensions = {"VK_KHR_portability_subset"};
+      if (task & GRAPHICS) {
         extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
       }
       return extensions;
@@ -49,22 +54,31 @@ namespace walrus {
     std::vector<QueueFamilyData> queueData{};
     VkPhysicalDeviceProperties properties{};
     VkPhysicalDeviceFeatures features{};
-    DeviceTask task = DeviceTask::ALL;
+    DeviceTask task = ALL;
     uint32_t score = 0;
     Support supportSummary{};
 
     DeviceInfo() = default;
 
-    explicit DeviceInfo(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface, DeviceTask deviceTask = DeviceTask::ALL);
+    explicit DeviceInfo(
+      VkPhysicalDevice &vkPhysicalDevice,
+      VkSurfaceKHR vkSurface = VK_NULL_HANDLE,
+      DeviceTask deviceTask = ALL
+    );
 
-    void init(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface, DeviceTask deviceTask = DeviceTask::ALL);
+    void init(
+      VkPhysicalDevice &vkPhysicalDevice,
+      VkSurfaceKHR vkSurface = VK_NULL_HANDLE,
+      DeviceTask deviceTask = ALL
+    );
 
     void clone(DeviceInfo const &deviceInfo);
 
-    static void createLogicalDevice(DeviceInfo &deviceInfo,
-                                    VkPhysicalDevice &vkPhysicalDevice,
-                                    VkDevice *device,
-                                    std::vector<VkQueue> &queues
+    static void createLogicalDevice(
+      DeviceInfo &deviceInfo,
+      VkPhysicalDevice &vkPhysicalDevice,
+      VkDevice *device,
+      std::vector<VkQueue> &queues
     );
 
     void print();
@@ -78,9 +92,15 @@ namespace walrus {
 
     void getQueueFamilyProperties(VkPhysicalDevice &vkPhysicalDevice);
 
-    void updateQueueSurfaceSupport(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface);
+    void updateQueueSurfaceSupport(
+      VkPhysicalDevice &vkPhysicalDevice,
+      VkSurfaceKHR vkSurface = VK_NULL_HANDLE
+    );
 
-    void updateDeviceSupportSummary(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR &vkSurface);
+    void updateDeviceSupportSummary(
+      VkPhysicalDevice &vkPhysicalDevice,
+      VkSurfaceKHR vkSurface = VK_NULL_HANDLE
+    );
 
     void selectMostSuitedQueue();
 

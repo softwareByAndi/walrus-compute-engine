@@ -82,6 +82,8 @@ namespace walrus {
     /// SURFACE
     if (_task & DeviceTask::GRAPHICS) {
       _window.createWindowSurface(_instance, &_surface);
+    } else {
+      assert(_surface == VK_NULL_HANDLE && "compute only tasks don't need a surface");
     }
 
     /// DEBUG MESSENGER
@@ -106,7 +108,7 @@ namespace walrus {
 
     /// DEVICE
     {
-      auto devicesInfos = DeviceInfo::getDeviceInfos(_instance, _surface, &_physicalDevices, _task);
+      auto devicesInfos = DeviceInfo::getDeviceInfos(_instance, &_physicalDevices, _surface, _task);
       std::cout << std::endl;
       std::cout << "physical device count: " << _physicalDevices.size() << std::endl;
       std::cout << "available devices: \n____________________________________\n";

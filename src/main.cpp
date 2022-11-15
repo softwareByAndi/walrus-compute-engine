@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]) {
   {
-    walrus::VulkanEngine engine{walrus::DeviceTask::COMPUTE};
+    walrus::VulkanEngine engine{walrus::ALL};
     engine.run();
   }
   return 0;
