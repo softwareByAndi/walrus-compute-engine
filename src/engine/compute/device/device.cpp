@@ -134,9 +134,8 @@ namespace walrus {
       if (queue.support.graphics) { queue.score += 1; }
       if (queue.support.compute) { queue.score += 1; }
       if (queue.support.surface) { queue.score += 1; }
-      if ((task == DeviceTask::GRAPHICS && !queue.support.graphics) ||
-        (task == DeviceTask::GRAPHICS && !queue.support.surface) ||
-        (task == DeviceTask::COMPUTE && !queue.support.compute) ||
+      if ((task & DeviceTask::GRAPHICS && (!queue.support.graphics || !queue.support.surface)) ||
+        (task & DeviceTask::COMPUTE && !queue.support.compute) ||
         (task == DeviceTask::ALL && !queue.support.isComplete())) {
         std::cerr << "queue not complete" << std::endl;
         queue.score = 0;
@@ -166,7 +165,7 @@ namespace walrus {
     for (const auto &extension: availableExtensions) {
       requiredExtensions.erase(extension.extensionName);
     }
-    if (task == DeviceTask::GRAPHICS || task == DeviceTask::ALL) {
+    if (task & DeviceTask::GRAPHICS) {
       if (!supportSummary.swapchain) {
         return false;
       }
@@ -189,7 +188,7 @@ namespace walrus {
       score += 1000;
     }
     // TODO : come up with better metrics
-    if (task == DeviceTask::GRAPHICS || task == DeviceTask::ALL) {
+    if (task & DeviceTask::GRAPHICS) {
       // maximum possible size of textures affects graphics quality
       score += properties.limits.maxImageDimension2D / 10;
     }

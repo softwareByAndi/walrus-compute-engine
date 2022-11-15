@@ -7,9 +7,9 @@
 namespace walrus {
 
   enum DeviceTask {
-    COMPUTE,
-    GRAPHICS,
-    ALL
+    COMPUTE = 1,
+    GRAPHICS = 1 << 1,
+    ALL = (COMPUTE | GRAPHICS)
   };
 
   class DeviceInfo {
@@ -21,7 +21,7 @@ namespace walrus {
     static std::vector<const char *> getExtensions(DeviceTask task = DeviceTask::ALL) {
       // TODO: only macOS needs the portability subset?
       std::vector<const char *> extensions = {"VK_KHR_portability_subset"};
-      if (task == DeviceTask::GRAPHICS || task == DeviceTask::ALL) {
+      if (task & DeviceTask::GRAPHICS) {
         extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
       }
       return extensions;
