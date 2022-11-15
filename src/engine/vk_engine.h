@@ -19,19 +19,19 @@ namespace walrus {
 
     void init(DeviceTask task = ALL);
 
+    void run();
+
+    void destroy();
+
+  private:
+
     void init_vulkan();
 
     void init_commands();
 
     void init_swapchain();
 
-    void destroy();
-
     void draw();
-
-    void run();
-
-  private:
 
     void runRender();
 
