@@ -108,7 +108,7 @@ namespace walrus {
       auto devicesInfos = DeviceInfo::getDeviceInfos(_instance, _surface, &_physicalDevices, _task);
       std::cout << std::endl;
       std::cout << "physical device count: " << _physicalDevices.size() << std::endl;
-      std::cout << "available devices: \n\n";
+      std::cout << "available devices: \n____________________________________\n";
       for (auto deviceInfo: devicesInfos) {
         deviceInfo.print();
       }

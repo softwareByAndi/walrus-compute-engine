@@ -11,6 +11,11 @@
 
 namespace walrus {
 
+  void printTaskFeatures(DeviceTask &task) {
+    io::printExists(task & DeviceTask::GRAPHICS, "graphics", false);
+    io::printExists(task & DeviceTask::COMPUTE, "compute", false);
+  }
+
   DeviceInfo::QueueFamilyData::QueueFamilyData(VkQueueFamilyProperties &vkProperties) {
     support = Support{};
     support.graphics = (vkProperties.queueFlags & VK_QUEUE_GRAPHICS_BIT) > 0;
@@ -56,7 +61,6 @@ namespace walrus {
     getQueueFamilyProperties(vkPhysicalDevice);
     updateQueueSurfaceSupport(vkPhysicalDevice, vkSurface);
     updateDeviceSupportSummary(vkPhysicalDevice, vkSurface);
-    selectMostSuitedQueue();
     calculateDeviceScore(vkPhysicalDevice);
   }
 
@@ -202,13 +206,12 @@ namespace walrus {
       score += 1000;
     }
 
+    selectMostSuitedQueue();
     uint32_t queueScore = 0;
-    for (auto &data: queueData) {
-      queueScore += data.score;
+    for (auto &queue: queueData) {
+      queueScore += queue.score;
     }
-    if (queueScore == 0) {
-      score = 0;
-    }
+    if (queueScore == 0) { score = 0; }
   }
 
 
@@ -264,11 +267,13 @@ namespace walrus {
 
 
   void DeviceInfo::print() {
-    std::cout << "device name:   " << properties.deviceName << std::endl;
-    std::cout << "device score:  " << score << std::endl;
-    std::cout << "declared task: " << task << std::endl;
+    std::cout << io::to_color_string(io::Color::LIGHT_GRAY, "device name:   ") << properties.deviceName << std::endl;
+    std::cout << io::to_color_string(io::Color::LIGHT_GRAY, "device score:  ") << score << std::endl;
+    std::cout << io::to_color_string(io::Color::LIGHT_GRAY, "declared task(s): ");
+    printTaskFeatures(task);
+    std::cout << std::endl;
     for (unsigned int i = 0; i < queueData.size(); i++) {
-      std::cout << "queueFamily " << i << " : ";
+      std::cout << io::COLORS[io::Color::LIGHT_GRAY] << "queueFamily " << i << " : ";
       io::printExists(queueData[i].support.graphics, "graphics", false);
       io::printExists(queueData[i].support.compute, "compute", false);
       io::printExists(queueData[i].support.surface, "surface", false);
@@ -279,7 +284,7 @@ namespace walrus {
     io::printExists(features.alphaToOne, "alphaToOne");
     io::printExists(features.depthBiasClamp, "depthBiasClamp");
     io::printExists(features.depthBounds, "depthBounds");
-    std::cout << "etc..." << std::endl;
+    std::cout << io::to_color_string(io::Color::LIGHT_GRAY, "etc...") << std::endl;
     std::cout << std::endl;
   }
 

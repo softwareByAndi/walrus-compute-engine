@@ -6,13 +6,17 @@
 
 namespace io {
 
-  std::string color(Colors color, std::string text) {
-    return "\033[" + std::to_string(color) + "m" + text + "\033[0m";
+  std::string to_color_string(Color color, std::string text) {
+    return COLORS[color] + text + COLORS[Color::RESET];
+  }
+  std::string to_color_string(Color color, int num) {
+    return to_color_string(color, std::to_string(num));
   }
 
   void printExists(bool exists, std::string text, bool newLine) {
-    if (exists) { std::cout << color(Colors::GREEN, " + " + text); }
-    else { std::cout << color(Colors::RED, " - " + text); }
+    if (exists) { std::cout << COLORS[Color::GREEN];  }
+    else { std::cout << COLORS[Color::RED]; }
+    std::cout << " - " << text << COLORS[Color::RESET];;
     if (newLine) { std::cout << std::endl; }
   }
 

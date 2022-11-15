@@ -12,6 +12,8 @@ namespace walrus {
     ALL = (COMPUTE | GRAPHICS)
   };
 
+  void printTaskFeatures(DeviceTask &task);
+
   class DeviceInfo {
   public:
 
