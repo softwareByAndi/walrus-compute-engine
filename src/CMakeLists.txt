@@ -8,8 +8,8 @@ add_executable(walrus_compute_engine
         pretty_io.cpp
         engine/vk_engine.cpp
         engine/vk_engine.h
-        engine/device/device.cpp
-        engine/device/device.hpp
+        engine/compute/device/device.cpp
+        engine/compute/device/device.hpp
         engine/commands/command.cpp
         engine/commands/command.hpp
         engine/rendering/window/window.cpp

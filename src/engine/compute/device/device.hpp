@@ -2,7 +2,7 @@
 #define WALRUS_COMPUTE_DEVICE_HPP
 
 #include <vector>
-#include <vk_types.h>
+#include "vk_types.h"
 
 namespace walrus {
 
