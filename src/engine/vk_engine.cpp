@@ -16,6 +16,8 @@
 #include <stdexcept>
 #include <cassert>
 
+#define VK_CHECK(x) assert(x == VK_SUCCESS);
+
 namespace walrus {
 
   void VulkanEngine::init(DeviceTask task) {
