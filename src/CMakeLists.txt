@@ -15,7 +15,10 @@ add_executable(walrus_compute_engine
         engine/rendering/window/window.cpp
         engine/rendering/window/window.hpp
         engine/rendering/swapchain/swapchain.cpp
-        engine/rendering/swapchain/swapchain.hpp)
+        engine/rendering/swapchain/swapchain.hpp
+        engine/rendering/renderpasses/render_pass.cpp
+        engine/rendering/renderpasses/render_pass.hpp
+        )
 
 set_property(TARGET walrus_compute_engine PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:walrus_compute_engine>")
 

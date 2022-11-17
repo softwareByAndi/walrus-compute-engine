@@ -31,7 +31,7 @@ namespace walrus {
 
     void init_swapchain();
 
-    void init_default_renderpass();
+    void init_renderpass();
 
     void init_framebuffers();
 

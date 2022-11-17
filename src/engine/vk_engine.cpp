@@ -1,16 +1,19 @@
 ﻿#include "vk_engine.h"
 
-#include "engine/rendering/swapchain/swapchain.hpp"
-#include "engine/compute/commands/command.hpp"
-#include "vk_initializers.h"
 #include "pretty_io.hpp"
+#include "vk_initializers.h"
+
+#include "engine/compute/commands/command.hpp"
+
+#include "engine/rendering/swapchain/swapchain.hpp"
+#include "engine/rendering/renderpasses/render_pass.hpp"
 
 #define GLFW_INCLUDE_VULKAN
+
 #include <GLFW/glfw3.h>
 
 #include <iostream>
-#include <algorithm>
-#include <iterator>
+#include <stdexcept>
 #include <cassert>
 
 namespace walrus {
@@ -26,7 +29,7 @@ namespace walrus {
       init_commands();
       if (_task & DeviceTask::GRAPHICS) {
         init_swapchain();
-        init_default_renderpass();
+        init_renderpass();
         init_framebuffers();
       }
       _isInitialized = true;
@@ -274,42 +277,13 @@ namespace walrus {
 
 
 
-  void VulkanEngine::init_default_renderpass() {
+  void VulkanEngine::init_renderpass() {
     assert(_swapchain != VK_NULL_HANDLE && "initialize swap chain before render pass");
     assert(_renderPass == VK_NULL_HANDLE && "RenderPass re-initialization not supported yet");
 
-    VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = _swapchainImageFormat;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT; // No MSAA
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; // clear when attachment is loaded
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // store attachment after renderpass ends
-    // don't care about stencil
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    // don't know or care about starting layout
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    // after teh renderpass ends, the image hs to be on a layout ready for display
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentReference attachmentRef{};
-    attachmentRef.attachment = 0; // indexes into _renderpass.pAttachments
-    attachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    // TODO: research sub pass
-    // 1 sub pass is minimum
-    VkSubpassDescription subpass = {};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &attachmentRef;
-
-    // TODO: refactor for depth test
-    VkRenderPassCreateInfo info{};
-    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    info.attachmentCount = 1;
-    info.pAttachments = &colorAttachment;
-    info.subpassCount = 1;
-    info.pSubpasses = &subpass;
-    if (vkCreateRenderPass(_device, &info, nullptr, &_renderPass) != VK_SUCCESS) {
+    auto renderPassCreateInfo = RenderPass::CreateInfo{};
+    RenderPass::GetDefaultRenderPassCreateInfo(renderPassCreateInfo, _swapchainImageFormat);
+    if (vkCreateRenderPass(_device, &renderPassCreateInfo.createInfo, nullptr, &_renderPass) != VK_SUCCESS) {
       throw std::runtime_error("failed to create render pass");
     }
   }
