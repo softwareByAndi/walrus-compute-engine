@@ -72,7 +72,7 @@ namespace walrus {
 
     /// RENDERING
     int _frameNumber{0};
-    Window _window{800, 600, "Vulkan Window"};
+    Window _window{800, 600, "Vulkan Window"}; // TODO: don't create window for compute only tasks
     VkSurfaceKHR _surface = VK_NULL_HANDLE;
 
     VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
