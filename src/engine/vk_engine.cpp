@@ -40,7 +40,8 @@ namespace walrus {
   }
 
   void VulkanEngine::init_vulkan() {
-    { /// INSTANCE
+    /// INSTANCE
+    {
       VkApplicationInfo appInfo{};
       appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
       appInfo.pApplicationName = "Vulkan Application";
