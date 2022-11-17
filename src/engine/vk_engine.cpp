@@ -39,6 +39,40 @@ namespace walrus {
     }
   }
 
+
+  void VulkanEngine::destroy() {
+    if (_isInitialized) {
+      if (_task & GRAPHICS) {
+        vkDestroyRenderPass(_device, _renderPass, nullptr);
+        vkDestroySwapchainKHR(_device, _swapchain, nullptr);
+        vkDestroySurfaceKHR(_instance, _surface, nullptr);
+        for (auto &framebuffer: _framebuffers) {
+          vkDestroyFramebuffer(_device, framebuffer, nullptr);
+        }
+        for (auto &imageView: _swapchainImageViews) {
+          vkDestroyImageView(_device, imageView, nullptr);
+        }
+      }
+      vkDestroyCommandPool(_device, _commandPool, nullptr);
+      vkDestroyDevice(_device, nullptr);
+      if (_enableValidationLayers) {
+        /// DESTROY DEBUG MESSENGER
+        auto destroyDebug = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
+          _instance,
+          "vkDestroyDebugUtilsMessengerEXT"
+        );
+        if (destroyDebug != nullptr) {
+          destroyDebug(_instance, _debugMessenger, nullptr);
+        }
+      }
+      vkDestroyInstance(_instance, nullptr);
+      _window.destroy();
+      _isInitialized = false;
+    }
+  }
+
+
+
   void VulkanEngine::init_vulkan() {
     /// INSTANCE
     {
@@ -351,36 +385,8 @@ namespace walrus {
 
 
 
-  void VulkanEngine::destroy() {
-    if (_isInitialized) {
-      if (_task & GRAPHICS) {
-        vkDestroyRenderPass(_device, _renderPass, nullptr);
-        vkDestroySwapchainKHR(_device, _swapchain, nullptr);
-        vkDestroySurfaceKHR(_instance, _surface, nullptr);
-        for (auto &framebuffer: _framebuffers) {
-          vkDestroyFramebuffer(_device, framebuffer, nullptr);
-        }
-        for (auto &imageView: _swapchainImageViews) {
-          vkDestroyImageView(_device, imageView, nullptr);
-        }
-      }
-      vkDestroyCommandPool(_device, _commandPool, nullptr);
-      vkDestroyDevice(_device, nullptr);
-      if (_enableValidationLayers) {
-        /// DESTROY DEBUG MESSENGER
-        auto destroyDebug = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
-          _instance,
-          "vkDestroyDebugUtilsMessengerEXT"
-        );
-        if (destroyDebug != nullptr) {
-          destroyDebug(_instance, _debugMessenger, nullptr);
-        }
-      }
-      vkDestroyInstance(_instance, nullptr);
-      _window.destroy();
-      _isInitialized = false;
-    }
-  }
+
+
 
   void VulkanEngine::draw() {
     //nothing yet
