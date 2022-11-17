@@ -18,6 +18,12 @@ add_executable(walrus_compute_engine
         engine/rendering/swapchain/swapchain.hpp
         engine/rendering/renderpasses/render_pass.cpp
         engine/rendering/renderpasses/render_pass.hpp
+        engine/compute/synchronize/fence/fence.cpp
+        engine/compute/synchronize/fence/fence.hpp
+        engine/compute/synchronize/semaphore/semaphore.cpp
+        engine/compute/synchronize/semaphore/semaphore.hpp
+        engine/compute/synchronize/generics.cpp
+        engine/compute/synchronize/generics.hpp
         )
 
 set_property(TARGET walrus_compute_engine PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:walrus_compute_engine>")

@@ -32,6 +32,7 @@ namespace walrus {
         init_renderpass();
         init_framebuffers();
       }
+      init_sync_structures();
       _isInitialized = true;
     } else {
       std::cout << io::to_color_string(io::RED, "VulkanEngine is already initialized") << std::endl;
@@ -318,6 +319,34 @@ namespace walrus {
     }
   }
 
+
+
+
+  void VulkanEngine::init_sync_structures() {
+    /// FENCES
+    {
+      VkFenceCreateInfo info{};
+      info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+      info.pNext = nullptr;
+      info.flags = VK_FENCE_CREATE_SIGNALED_BIT; // signal == mutex lock
+      if (vkCreateFence(_device, &info, nullptr, &_fences.render)) {
+        throw std::runtime_error("unable to create fence");
+      }
+    }
+
+    /// SEMAPHORES
+    {
+      VkSemaphoreCreateInfo info{};
+      info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+      info.pNext = nullptr;
+      info.flags = 0;
+      if (vkCreateSemaphore(_device, &info, nullptr, &_semaphores.present) &&
+        vkCreateSemaphore(_device, &info, nullptr, &_semaphores.present)) {
+        throw std::runtime_error("unable to create semaphores");
+      }
+    }
+
+  }
 
 
 

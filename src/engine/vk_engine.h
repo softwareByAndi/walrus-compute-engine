@@ -2,6 +2,7 @@
 
 #include "engine/rendering/window/window.hpp"
 #include "engine/compute/device/device.hpp"
+#include "engine/compute/synchronize/generics.hpp"
 
 #include "vk_types.h"
 #include <vector>
@@ -34,6 +35,8 @@ namespace walrus {
     void init_renderpass();
 
     void init_framebuffers();
+
+    void init_sync_structures();
 
 
     void draw();
@@ -79,5 +82,8 @@ namespace walrus {
 
     VkRenderPass _renderPass = VK_NULL_HANDLE;
     std::vector<VkFramebuffer> _framebuffers{};
+
+    sync::generics::RenderSync<VkSemaphore> _semaphores{};
+    sync::generics::RenderSync<VkFence> _fences{};
   };
 }
