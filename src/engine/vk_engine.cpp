@@ -44,7 +44,12 @@ namespace walrus {
 
   void VulkanEngine::destroy() {
     if (_isInitialized) {
+      vkDeviceWaitIdle(_device);
       if (_task & GRAPHICS) {
+        vkDestroySemaphore(_device, _semaphores.present, nullptr);
+        vkDestroySemaphore(_device, _semaphores.render, nullptr);
+        vkDestroyFence(_device, _fences.render, nullptr);
+
         vkDestroyRenderPass(_device, _renderPass, nullptr);
         vkDestroySwapchainKHR(_device, _swapchain, nullptr);
         vkDestroySurfaceKHR(_instance, _surface, nullptr);
