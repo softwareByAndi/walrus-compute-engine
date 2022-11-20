@@ -538,10 +538,19 @@ namespace walrus {
     std::cout << "window extent: " << _window.getExtent().width << " : " << _window.getExtent().height << std::endl;
     std::cout << "swap extent:   " << _swapchainExtent.width << " : " << _swapchainExtent.height << std::endl;
     WindowEvents winEvents{_window.getGLFWwindow()};
+    winEvents.addKey(keys::SPACE);
+    winEvents.addKey(keys::UP);
     while (!_window.shouldClose()) {
       glfwPollEvents();
-      if (winEvents.keyPress(keys::SPACE)) {
-        std::cout << "space was pressed" << std::endl;
+      winEvents.poll();
+      if (winEvents.keyPress(keys::SPACE)){
+        std::cout << "space bar down" << std::endl;
+      }
+      if (winEvents.keyRelease(keys::SPACE)){
+        std::cout << "space bar up" << std::endl;
+      }
+      if (winEvents.keyActive(keys::UP)) {
+        std::cout << "up arrow" << std::endl;
       }
       draw();
     }
