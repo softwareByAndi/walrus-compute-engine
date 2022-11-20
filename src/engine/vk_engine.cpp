@@ -471,7 +471,7 @@ namespace walrus {
       VK_CHECK(vkBeginCommandBuffer(_commandBuffer, &info));
     }
 
-    /// RENDER PASS BEGIN
+    /// RENDER PASS
     {
       VkRenderPassBeginInfo info{};
       info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -484,9 +484,12 @@ namespace walrus {
       info.renderArea.offset.x = 0;
       info.renderArea.offset.y = 0;
       info.renderArea.extent = _swapchainExtent;
+
       vkCmdBeginRenderPass(_commandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+      vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _trianglePipeline);
+      vkCmdDraw(_commandBuffer, 3, 1, 0, 0);
+      vkCmdEndRenderPass(_commandBuffer);
     }
-    vkCmdEndRenderPass(_commandBuffer);
     VK_CHECK(vkEndCommandBuffer(_commandBuffer));
 
     /// SUBMIT TO QUEUE
