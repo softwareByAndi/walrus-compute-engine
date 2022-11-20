@@ -380,7 +380,7 @@ namespace walrus {
       info.pNext = nullptr;
       info.flags = 0;
       VK_CHECK(vkCreateSemaphore(_device, &info, nullptr, &_semaphores.present));
-      VK_CHECK(vkCreateSemaphore(_device, &info, nullptr, &_semaphores.present));
+      VK_CHECK(vkCreateSemaphore(_device, &info, nullptr, &_semaphores.render));
     }
 
   }
