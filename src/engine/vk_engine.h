@@ -1,6 +1,8 @@
 ﻿#pragma once
 
 #include "engine/rendering/window/window.hpp"
+#include "engine/rendering/swapchain/swapchain.hpp"
+
 #include "engine/compute/device/device.hpp"
 #include "engine/compute/synchronize/generics.hpp"
 
@@ -75,6 +77,8 @@ namespace walrus {
     Window _window{800, 600, "Vulkan Window"}; // TODO: don't create window for compute only tasks
     VkSurfaceKHR _surface = VK_NULL_HANDLE;
 
+    Swapchain::SupportDetails _swapchainSupportDetails{};
+    VkExtent2D _swapchainExtent{};
     VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
     VkFormat _swapchainImageFormat{};
     std::vector<VkImage> _swapchainImages{};

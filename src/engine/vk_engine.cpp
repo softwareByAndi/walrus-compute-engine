@@ -5,7 +5,6 @@
 
 #include "engine/compute/commands/command.hpp"
 
-#include "engine/rendering/swapchain/swapchain.hpp"
 #include "engine/rendering/renderpasses/render_pass.hpp"
 
 #define GLFW_INCLUDE_VULKAN
@@ -225,15 +224,15 @@ namespace walrus {
 
     /// SWAPCHAIN
     {
-      Swapchain::SupportDetails swapchainSupportDetails = Swapchain::querySwapchainSupport(_physicalDevice, _surface);
-      auto vkSurfaceFormat = Swapchain::chooseSurfaceFormat(swapchainSupportDetails);
-      auto vkPresentMode = Swapchain::choosePresentationMode(swapchainSupportDetails);
-      auto vkExtent = Swapchain::chooseExtent(swapchainSupportDetails, _window);
+      _swapchainSupportDetails = Swapchain::querySwapchainSupport(_physicalDevice, _surface);
+      auto vkSurfaceFormat = Swapchain::chooseSurfaceFormat(_swapchainSupportDetails);
+      auto vkPresentMode = Swapchain::choosePresentationMode(_swapchainSupportDetails);
+      _swapchainExtent = Swapchain::chooseExtent(_swapchainSupportDetails, _window);
       _swapchainImageFormat = vkSurfaceFormat.format;
-      uint32_t imageCount = swapchainSupportDetails.capabilities.minImageCount + 1;
-      if (swapchainSupportDetails.capabilities.maxImageCount > 0 &&
-        imageCount > swapchainSupportDetails.capabilities.maxImageCount) {
-        imageCount = swapchainSupportDetails.capabilities.maxImageCount;
+      uint32_t imageCount = _swapchainSupportDetails.capabilities.minImageCount + 1;
+      if (_swapchainSupportDetails.capabilities.maxImageCount > 0 &&
+        imageCount > _swapchainSupportDetails.capabilities.maxImageCount) {
+        imageCount = _swapchainSupportDetails.capabilities.maxImageCount;
       }
 
       VkSwapchainCreateInfoKHR createInfo{};
@@ -242,9 +241,9 @@ namespace walrus {
       createInfo.minImageCount = imageCount;
       createInfo.imageFormat = vkSurfaceFormat.format;
       createInfo.imageColorSpace = vkSurfaceFormat.colorSpace;
-      createInfo.imageExtent = vkExtent;
+      createInfo.imageExtent = _swapchainExtent;
       createInfo.imageArrayLayers = 1; // always 1 unless creating stereoscopic 3D application
-      createInfo.preTransform = swapchainSupportDetails.capabilities.currentTransform; // 90deg, flip, etc...
+      createInfo.preTransform = _swapchainSupportDetails.capabilities.currentTransform; // 90deg, flip, etc...
       createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
       createInfo.presentMode = vkPresentMode;
       createInfo.clipped = VK_TRUE; // delete pixels that are covered by other pixels
@@ -346,8 +345,8 @@ namespace walrus {
     info.pNext = nullptr;
     info.renderPass = _renderPass;
     info.attachmentCount = 1;
-    info.width = _window.getExtent().width;
-    info.height = _window.getExtent().height;
+    info.width = _swapchainExtent.width;
+    info.height = _swapchainExtent.height;
     info.layers = 1;
 
     // create a frame buffer for each image in the swapchain
