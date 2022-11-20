@@ -24,6 +24,8 @@ add_executable(walrus_compute_engine
         engine/compute/synchronize/semaphore/semaphore.hpp
         engine/compute/synchronize/generics.cpp
         engine/compute/synchronize/generics.hpp
+        engine/rendering/pipelines/defaults/pipeline_defaults.cpp
+        engine/rendering/pipelines/defaults/pipeline_defaults.hpp
         )
 
 set_property(TARGET walrus_compute_engine PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:walrus_compute_engine>")
