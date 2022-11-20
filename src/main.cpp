@@ -5,7 +5,7 @@
 #include <iostream>
 
 int main(int argc, char *argv[]) {
-  io::printColorTest();
+//  io::printColorTest();
   {
     walrus::VulkanEngine engine{walrus::DeviceTask::ALL};
     engine.run();
