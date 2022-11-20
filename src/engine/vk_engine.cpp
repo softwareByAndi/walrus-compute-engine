@@ -29,12 +29,12 @@ namespace walrus {
 
       init_vulkan();
       init_commands();
+      init_sync_structures();
       if (_task & DeviceTask::GRAPHICS) {
         init_swapchain();
         init_renderpass();
         init_framebuffers();
       }
-      init_sync_structures();
       _isInitialized = true;
     } else {
       std::cout << io::to_color_string(io::RED, "VulkanEngine is already initialized") << std::endl;
