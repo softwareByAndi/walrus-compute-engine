@@ -12,6 +12,7 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <math.h>
 #include <stdexcept>
 #include <cassert>
 
@@ -389,7 +390,76 @@ namespace walrus {
 
 
   void VulkanEngine::draw() {
-    //nothing yet
+    VK_CHECK(vkWaitForFences(_device, 1, &_fences.render, true, 1'000'000'000));
+    VK_CHECK(vkResetFences(_device, 1, &_fences.render));
+
+    uint32_t imageIndex;
+    VK_CHECK(vkAcquireNextImageKHR(_device, _swapchain, 1'000'000'000, _semaphores.present, nullptr, &imageIndex));
+
+    auto graphicsQueue = _queues.front();
+
+    VkClearValue clearValue{};
+    float flash = abs(sin(_frameNumber / 120.f));
+    clearValue.color = {{0.f, 0.f, flash, 1.f}};
+    _frameNumber++;
+
+    /// CMD BUFFER BEGIN
+    {
+      VK_CHECK(vkResetCommandBuffer(_commandBuffer, 0));
+      VkCommandBufferBeginInfo info{};
+      info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+      info.pNext = nullptr;
+      info.pInheritanceInfo = nullptr; // used for secondary cmd buffers.
+      info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+      VK_CHECK(vkBeginCommandBuffer(_commandBuffer, &info));
+    }
+
+    /// RENDER PASS BEGIN
+    {
+      VkRenderPassBeginInfo info{};
+      info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      info.pNext = nullptr;
+      info.renderPass = _renderPass;
+      info.framebuffer = _framebuffers[imageIndex]; // the image we will render into.
+      info.clearValueCount = 1;
+      info.pClearValues = &clearValue;
+      // offset and extent can be set if we want to render a small renderpass into a bigger image
+      info.renderArea.offset.x = 0;
+      info.renderArea.offset.y = 0;
+      info.renderArea.extent = _swapchainExtent;
+      vkCmdBeginRenderPass(_commandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+    }
+    vkCmdEndRenderPass(_commandBuffer);
+    VK_CHECK(vkEndCommandBuffer(_commandBuffer));
+
+    /// SUBMIT TO QUEUE
+    {
+      VkSubmitInfo info{};
+      info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+      info.pNext = nullptr;
+      VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+      info.pWaitDstStageMask = &waitStage;
+      info.waitSemaphoreCount = 1;
+      info.pWaitSemaphores = &_semaphores.present; // mutex is locked from vkAcquireNextImageKHR above
+      info.signalSemaphoreCount = 1;
+      info.pSignalSemaphores = &_semaphores.render; // set rendering mutex
+      info.commandBufferCount = 1;
+      info.pCommandBuffers = &_commandBuffer;
+      VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &info, _fences.render));
+    }
+
+    /// PRESENT
+    {
+      VkPresentInfoKHR info{};
+      info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+      info.pNext = nullptr;
+      info.swapchainCount = 1;
+      info.pSwapchains = &_swapchain;
+      info.waitSemaphoreCount = 1;
+      info.pWaitSemaphores = &_semaphores.render; // mutex is locked from vkQueueSubmit above
+      info.pImageIndices = &imageIndex;
+      VK_CHECK(vkQueuePresentKHR(graphicsQueue, &info));
+    }
   }
 
   void VulkanEngine::run() {
@@ -403,8 +473,11 @@ namespace walrus {
   }
 
   void VulkanEngine::runRender() {
+    std::cout << "window extent: " << _window.getExtent().width << " : " << _window.getExtent().height << std::endl;
+    std::cout << "swap extent:   " << _swapchainExtent.width << " : " << _swapchainExtent.height << std::endl;
     while (!_window.shouldClose()) {
       glfwPollEvents();
+      draw();
     }
   }
 
