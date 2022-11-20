@@ -114,14 +114,10 @@ namespace walrus {
         createInfo.ppEnabledLayerNames = _validationLayers.data();
         createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *) &debugCreateInfo;
       }
-      if (_enableValidationLayers && !vkInit::checkValidationLayerSupport(_validationLayers)) {
-        throw std::runtime_error("validation layers requested, but not available!");
-      }
+      assert(!_enableValidationLayers || vkInit::checkValidationLayerSupport(_validationLayers));
 
       // TODO: add allocator?
-      if (vkCreateInstance(&createInfo, nullptr, &_instance) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create instance");
-      }
+      VK_CHECK(vkCreateInstance(&createInfo, nullptr, &_instance));
     }
 
     /// SURFACE
@@ -138,9 +134,7 @@ namespace walrus {
         _instance,
         "vkCreateDebugUtilsMessengerEXT"
       );
-      if (createExtension == nullptr) {
-        throw std::runtime_error("debug messenger extension not present");
-      }
+      assert(createExtension != nullptr);
       if (createExtension(
         _instance,
         &createInfo,
@@ -203,17 +197,13 @@ namespace walrus {
       assert(!(_task & DeviceTask::GRAPHICS) || _deviceInfo.queueData[0].support.isComplete() &&
         "current logic only supports queues with complete support...");
       auto createInfo = CommandPool::createInfo(0, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-      if (vkCreateCommandPool(_device, &createInfo, nullptr, &_commandPool) != VK_SUCCESS) {
-        throw std::runtime_error("unable to create command pool...");
-      }
+      VK_CHECK(vkCreateCommandPool(_device, &createInfo, nullptr, &_commandPool));
     }
 
     /// COMMAND BUFFER
     {
       auto allocInfo = CommandBuffer::allocateInfo(_commandPool);
-      if (vkAllocateCommandBuffers(_device, &allocInfo, &_commandBuffer) != VK_SUCCESS) {
-        throw std::runtime_error("unable to allocate command buffer");
-      }
+      VK_CHECK(vkAllocateCommandBuffers(_device, &allocInfo, &_commandBuffer));
     }
   }
 
@@ -281,9 +271,7 @@ namespace walrus {
         createInfo.pQueueFamilyIndices = nullptr;
       }
 
-      if (vkCreateSwapchainKHR(_device, &createInfo, nullptr, &_swapchain) != VK_SUCCESS) {
-        throw std::runtime_error("unable to create swapchain...");
-      }
+      VK_CHECK(vkCreateSwapchainKHR(_device, &createInfo, nullptr, &_swapchain));
 
       vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, nullptr);
       assert(imageCount > 0 && "no images?");
@@ -310,9 +298,7 @@ namespace walrus {
         createInfo.subresourceRange.levelCount = 1;
         createInfo.subresourceRange.baseArrayLayer = 0;
         createInfo.subresourceRange.layerCount = 1;
-        if (vkCreateImageView(_device, &createInfo, nullptr, &_swapchainImageViews[i]) != VK_SUCCESS) {
-          throw std::runtime_error("failed to create image view[" + std::to_string(i) + "]");
-        }
+        VK_CHECK(vkCreateImageView(_device, &createInfo, nullptr, &_swapchainImageViews[i]));
       }
     }
   }
@@ -326,9 +312,7 @@ namespace walrus {
 
     auto renderPassCreateInfo = RenderPass::CreateInfo{};
     RenderPass::GetDefaultRenderPassCreateInfo(renderPassCreateInfo, _swapchainImageFormat);
-    if (vkCreateRenderPass(_device, &renderPassCreateInfo.createInfo, nullptr, &_renderPass) != VK_SUCCESS) {
-      throw std::runtime_error("failed to create render pass");
-    }
+    VK_CHECK(vkCreateRenderPass(_device, &renderPassCreateInfo.createInfo, nullptr, &_renderPass));
   }
 
 
@@ -355,9 +339,7 @@ namespace walrus {
     _framebuffers.resize(imageCount);
     for (size_t i = 0; i < imageCount; i++) {
       info.pAttachments = &_swapchainImageViews[i];
-      if (vkCreateFramebuffer(_device, &info, nullptr, &_framebuffers[i]) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create framebuffer[" + std::to_string(i) + "]");
-      }
+      VK_CHECK(vkCreateFramebuffer(_device, &info, nullptr, &_framebuffers[i]));
     }
   }
 
