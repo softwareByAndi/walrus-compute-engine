@@ -8,6 +8,8 @@
 #include "engine/rendering/renderpasses/render_pass.hpp"
 #include "engine/rendering/pipelines/builder/pipeline_builder.hpp"
 #include "engine/rendering/pipelines/defaults/pipeline_defaults.hpp"
+#include "engine/rendering/window/events/window_events.hpp"
+#include "engine/rendering/window/events/keys/keys.hpp"
 
 #define GLFW_INCLUDE_VULKAN
 
@@ -535,8 +537,12 @@ namespace walrus {
   void VulkanEngine::runRender() {
     std::cout << "window extent: " << _window.getExtent().width << " : " << _window.getExtent().height << std::endl;
     std::cout << "swap extent:   " << _swapchainExtent.width << " : " << _swapchainExtent.height << std::endl;
+    WindowEvents winEvents{_window.getGLFWwindow()};
     while (!_window.shouldClose()) {
       glfwPollEvents();
+      if (winEvents.keyPress(keys::SPACE)) {
+        std::cout << "space was pressed" << std::endl;
+      }
       draw();
     }
   }
