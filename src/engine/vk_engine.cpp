@@ -413,8 +413,8 @@ namespace walrus {
     VkShaderModule triangleFragmentShader;
     VkShaderModule triangleVertexShader;
     {
-      std::string fragFilePath = "../../shaders/triangle.frag.spv";
-      std::string vertFilePath = "../../shaders/triangle.vert.spv";
+      std::string fragFilePath = "../../shaders/triangle_red.frag.spv";
+      std::string vertFilePath = "../../shaders/triangle_red.vert.spv";
       io::printExists(
         load_shader_module(fragFilePath.data(), &triangleFragmentShader),
         fragFilePath
