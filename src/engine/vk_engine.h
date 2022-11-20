@@ -40,6 +40,10 @@ namespace walrus {
 
     void init_sync_structures();
 
+    bool load_shader_module(const char* filePath, VkShaderModule* outShaderModule);
+
+    void init_pipelines();
+
 
     void draw();
 

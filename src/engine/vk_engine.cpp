@@ -15,6 +15,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <cassert>
+#include <fstream>
 
 #define VK_CHECK(x) assert(x == VK_SUCCESS);
 
@@ -34,7 +35,9 @@ namespace walrus {
         init_swapchain();
         init_renderpass();
         init_framebuffers();
+        init_pipelines();
       }
+      std::cout << io::to_color_string(io::LIGHT_BLUE, "vulkan initialized!") << std::endl;
       _isInitialized = true;
     } else {
       std::cout << io::to_color_string(io::RED, "VulkanEngine is already initialized") << std::endl;
@@ -365,9 +368,53 @@ namespace walrus {
       VK_CHECK(vkCreateSemaphore(_device, &info, nullptr, &_semaphores.present));
       VK_CHECK(vkCreateSemaphore(_device, &info, nullptr, &_semaphores.render));
     }
-
   }
 
+
+
+
+  bool VulkanEngine::load_shader_module(const char *filePath, VkShaderModule *outShaderModule) {
+    std::ifstream file(filePath, std::ios::ate | std::ios::binary);
+    if (!file.is_open()) {
+      return false;
+    }
+
+    size_t fileSize = (size_t) file.tellg();
+    std::vector<uint32_t> buffer(fileSize / sizeof(uint32_t));
+    file.seekg(0);
+    file.read((char *) buffer.data(), fileSize);
+    file.close();
+
+    VkShaderModuleCreateInfo info{};
+    info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    info.pNext = nullptr;
+    info.codeSize = buffer.size() * sizeof(uint32_t);
+    info.pCode = buffer.data();
+
+    VkShaderModule shaderModule;
+    if (vkCreateShaderModule(_device, &info, nullptr, &shaderModule) != VK_SUCCESS) {
+      return false;
+    }
+    *outShaderModule = shaderModule;
+    return true;
+  }
+
+
+
+
+  void VulkanEngine::init_pipelines() {
+    VkShaderModule triangleFragShader;
+    std::vector<std::string> shaderFilePaths = {
+      "../../shaders/triangle.frag.spv",
+      "../../shaders/triangle.vert.spv"
+    };
+    for (auto &filePath: shaderFilePaths) {
+      io::printExists(
+        load_shader_module(filePath.data(), &triangleFragShader),
+        filePath
+      );
+    }
+  }
 
 
 
