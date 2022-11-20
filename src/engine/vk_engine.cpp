@@ -370,9 +370,7 @@ namespace walrus {
       info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
       info.pNext = nullptr;
       info.flags = VK_FENCE_CREATE_SIGNALED_BIT; // signal == mutex lock
-      if (vkCreateFence(_device, &info, nullptr, &_fences.render)) {
-        throw std::runtime_error("unable to create fence");
-      }
+      VK_CHECK(vkCreateFence(_device, &info, nullptr, &_fences.render));
     }
 
     /// SEMAPHORES
@@ -381,15 +379,11 @@ namespace walrus {
       info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
       info.pNext = nullptr;
       info.flags = 0;
-      if (vkCreateSemaphore(_device, &info, nullptr, &_semaphores.present) &&
-        vkCreateSemaphore(_device, &info, nullptr, &_semaphores.present)) {
-        throw std::runtime_error("unable to create semaphores");
-      }
+      VK_CHECK(vkCreateSemaphore(_device, &info, nullptr, &_semaphores.present));
+      VK_CHECK(vkCreateSemaphore(_device, &info, nullptr, &_semaphores.present));
     }
 
   }
-
-
 
 
 
