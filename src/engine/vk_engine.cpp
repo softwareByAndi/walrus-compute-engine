@@ -6,6 +6,8 @@
 #include "engine/compute/commands/command.hpp"
 
 #include "engine/rendering/renderpasses/render_pass.hpp"
+#include "engine/rendering/pipelines/builder/pipeline_builder.hpp"
+#include "engine/rendering/pipelines/defaults/pipeline_defaults.hpp"
 
 #define GLFW_INCLUDE_VULKAN
 
@@ -403,6 +405,9 @@ namespace walrus {
 
 
   void VulkanEngine::init_pipelines() {
+    assert(_swapchain != VK_NULL_HANDLE && "initialize swapchain before pipelines");
+
+    /// LOAD SHADERS
     VkShaderModule triangleFragmentShader;
     VkShaderModule triangleVertexShader;
     {
@@ -416,6 +421,26 @@ namespace walrus {
         load_shader_module(vertFilePath.data(), &triangleVertexShader),
         vertFilePath
       );
+    }
+
+    /// LAYOUT
+    {
+      // TODO: add descriptor sets and other stuff
+      VkPipelineLayoutCreateInfo info = defaults::pipeline::layoutCreateInfo();
+      VK_CHECK(vkCreatePipelineLayout(_device, &info, nullptr, &_trianglePipelineLayout));
+    }
+
+    /// PIPELINE
+    {
+      PipelineBuilder builder{_swapchainExtent};
+      builder.shaderStagesCreate.push_back(
+        defaults::pipeline::shaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, triangleVertexShader));
+      builder.shaderStagesCreate.push_back(
+        defaults::pipeline::shaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, triangleFragmentShader));
+      builder.inputAssemblyCreate.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+      builder.rasterizerCreate.polygonMode = VK_POLYGON_MODE_FILL;
+      builder.pipelineLayout = _trianglePipelineLayout;
+      builder.build(_device, _renderPass, &_trianglePipeline);
     }
   }
 

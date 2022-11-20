@@ -91,6 +91,9 @@ namespace walrus {
     VkRenderPass _renderPass = VK_NULL_HANDLE;
     std::vector<VkFramebuffer> _framebuffers{};
 
+    VkPipelineLayout _trianglePipelineLayout = VK_NULL_HANDLE;
+    VkPipeline _trianglePipeline = VK_NULL_HANDLE;
+
     sync::generics::RenderSync<VkSemaphore> _semaphores{};
     sync::generics::RenderSync<VkFence> _fences{};
   };
