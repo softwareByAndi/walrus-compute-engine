@@ -403,15 +403,18 @@ namespace walrus {
 
 
   void VulkanEngine::init_pipelines() {
-    VkShaderModule triangleFragShader;
-    std::vector<std::string> shaderFilePaths = {
-      "../../shaders/triangle.frag.spv",
-      "../../shaders/triangle.vert.spv"
-    };
-    for (auto &filePath: shaderFilePaths) {
+    VkShaderModule triangleFragmentShader;
+    VkShaderModule triangleVertexShader;
+    {
+      std::string fragFilePath = "../../shaders/triangle.frag.spv";
+      std::string vertFilePath = "../../shaders/triangle.vert.spv";
       io::printExists(
-        load_shader_module(filePath.data(), &triangleFragShader),
-        filePath
+        load_shader_module(fragFilePath.data(), &triangleFragmentShader),
+        fragFilePath
+      );
+      io::printExists(
+        load_shader_module(vertFilePath.data(), &triangleVertexShader),
+        vertFilePath
       );
     }
   }
