@@ -19,12 +19,12 @@ namespace walrus {
 
     void build(VkDevice vkDevice, VkRenderPass vkRenderPass, VkPipeline *outPipeline);
 
-    std::vector<VkPipelineShaderStageCreateInfo> shaderStagesCreate{};
-    VkPipelineVertexInputStateCreateInfo vertexInputCreate = defaults::pipeline::vertexInputStateCreateInfo();
-    VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreate = defaults::pipeline::inputAssemblyStateCreateInfo();
-    VkPipelineRasterizationStateCreateInfo rasterizerCreate = defaults::pipeline::rasterizationStateCreateInfo();
-    VkPipelineMultisampleStateCreateInfo multisampleCreate = defaults::pipeline::multisampleStateCreateInfo();
-    VkPipelineColorBlendAttachmentState colorBlendAttachment = defaults::pipeline::colorBlendAttachmentState();
+    std::vector<VkPipelineShaderStageCreateInfo> shaderStages{};
+    VkPipelineVertexInputStateCreateInfo vertexInputState = defaults::pipeline::vertexInputStateCreateInfo();
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = defaults::pipeline::inputAssemblyStateCreateInfo();
+    VkPipelineRasterizationStateCreateInfo rasterizerState = defaults::pipeline::rasterizationStateCreateInfo();
+    VkPipelineMultisampleStateCreateInfo multisampleState = defaults::pipeline::multisampleStateCreateInfo();
+    VkPipelineColorBlendAttachmentState colorBlendAttachmentState = defaults::pipeline::colorBlendAttachmentState();
     VkRect2D scissor{};
     VkViewport viewport{};
     VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;

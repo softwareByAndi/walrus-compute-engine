@@ -41,18 +41,18 @@ namespace walrus {
     colorBlendCreate.logicOpEnable = VK_FALSE;
     colorBlendCreate.logicOp = VK_LOGIC_OP_COPY;
     colorBlendCreate.attachmentCount = 1;
-    colorBlendCreate.pAttachments = &this->colorBlendAttachment;
+    colorBlendCreate.pAttachments = &this->colorBlendAttachmentState;
 
     /// PIPELINE
     VkGraphicsPipelineCreateInfo info{};
     info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     info.pNext = nullptr;
-    info.stageCount = this->shaderStagesCreate.size();
-    info.pStages = this->shaderStagesCreate.data();
-    info.pVertexInputState = &this->vertexInputCreate;
-    info.pInputAssemblyState = &this->inputAssemblyCreate;
-    info.pRasterizationState = &this->rasterizerCreate;
-    info.pMultisampleState = &this->multisampleCreate;
+    info.stageCount = this->shaderStages.size();
+    info.pStages = this->shaderStages.data();
+    info.pVertexInputState = &this->vertexInputState;
+    info.pInputAssemblyState = &this->inputAssemblyState;
+    info.pRasterizationState = &this->rasterizerState;
+    info.pMultisampleState = &this->multisampleState;
     info.pViewportState = &viewportCreate;
     info.pColorBlendState = &colorBlendCreate;
     info.renderPass = vkRenderPass;
