@@ -5,8 +5,8 @@ namespace walrus::sync::generics {
 
   template<class T>
   struct RenderSync {
-    T present{};
-    T render{};
+    T* pPresent = nullptr;
+    T* pRender = nullptr;
   };
 
 

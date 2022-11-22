@@ -21,7 +21,7 @@
 #include <cassert>
 #include <fstream>
 
-#define VK_CHECK(x) assert(x == VK_SUCCESS);
+#define VK_CHECK(x) assert(x == VK_SUCCESS)
 
 namespace walrus {
 
@@ -52,22 +52,10 @@ namespace walrus {
   void VulkanEngine::destroy() {
     if (_isInitialized) {
       vkDeviceWaitIdle(_device);
+      _mainDestructionQueue.destroyAll();
       if (_task & GRAPHICS) {
-        vkDestroySemaphore(_device, _semaphores.present, nullptr);
-        vkDestroySemaphore(_device, _semaphores.render, nullptr);
-        vkDestroyFence(_device, _fences.render, nullptr);
-
-        vkDestroyRenderPass(_device, _renderPass, nullptr);
-        vkDestroySwapchainKHR(_device, _swapchain, nullptr);
         vkDestroySurfaceKHR(_instance, _surface, nullptr);
-        for (auto &framebuffer: _framebuffers) {
-          vkDestroyFramebuffer(_device, framebuffer, nullptr);
-        }
-        for (auto &imageView: _swapchainImageViews) {
-          vkDestroyImageView(_device, imageView, nullptr);
-        }
       }
-      vkDestroyCommandPool(_device, _commandPool, nullptr);
       vkDestroyDevice(_device, nullptr);
       if (_enableValidationLayers) {
         /// DESTROY DEBUG MESSENGER
@@ -212,6 +200,9 @@ namespace walrus {
       auto allocInfo = CommandBuffer::allocateInfo(_commandPool);
       VK_CHECK(vkAllocateCommandBuffers(_device, &allocInfo, &_commandBuffer));
     }
+
+    /// DESTROY
+    _mainDestructionQueue.addDestructor([=]() { vkDestroyCommandPool(_device, _commandPool, nullptr); });
   }
 
 
@@ -246,7 +237,6 @@ namespace walrus {
       createInfo.presentMode = vkPresentMode;
       createInfo.clipped = VK_TRUE; // delete pixels that are covered by other pixels
       createInfo.oldSwapchain = VK_NULL_HANDLE;
-
       /*
         imageUsage = swapchain operations
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT:
@@ -279,7 +269,6 @@ namespace walrus {
       }
 
       VK_CHECK(vkCreateSwapchainKHR(_device, &createInfo, nullptr, &_swapchain));
-
       vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, nullptr);
       assert(imageCount > 0 && "no images?");
       assert(_swapchainImages.empty() && "swapchain re-creation not supported yet.");
@@ -306,8 +295,12 @@ namespace walrus {
         createInfo.subresourceRange.baseArrayLayer = 0;
         createInfo.subresourceRange.layerCount = 1;
         VK_CHECK(vkCreateImageView(_device, &createInfo, nullptr, &_swapchainImageViews[i]));
+        /// destroyed with framebuffers
       }
     }
+
+    /// DESTROY
+    _mainDestructionQueue.addDestructor([=]() { vkDestroySwapchainKHR(_device, _swapchain, nullptr); });
   }
 
 
@@ -317,9 +310,13 @@ namespace walrus {
     assert(_swapchain != VK_NULL_HANDLE && "initialize swap chain before render pass");
     assert(_renderPass == VK_NULL_HANDLE && "RenderPass re-initialization not supported yet");
 
+    /// RENDER PASS
     auto renderPassCreateInfo = RenderPass::CreateInfo{};
     RenderPass::GetDefaultRenderPassCreateInfo(renderPassCreateInfo, _swapchainImageFormat);
     VK_CHECK(vkCreateRenderPass(_device, &renderPassCreateInfo.createInfo, nullptr, &_renderPass));
+
+    /// DESTROY
+    _mainDestructionQueue.addDestructor([=]() { vkDestroyRenderPass(_device, _renderPass, nullptr); });
   }
 
 
@@ -332,6 +329,7 @@ namespace walrus {
     assert(!_swapchainImageViews.empty() && "can't create a frame buffer if no image views...");
     assert(_framebuffers.empty() && "framebuffer re-initialization not supported yet");
 
+    /// FRAME BUFFERS
     VkFramebufferCreateInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     info.pNext = nullptr;
@@ -348,6 +346,16 @@ namespace walrus {
       info.pAttachments = &_swapchainImageViews[i];
       VK_CHECK(vkCreateFramebuffer(_device, &info, nullptr, &_framebuffers[i]));
     }
+
+    /// DESTROY
+    _mainDestructionQueue.addDestructor([=]() {
+      for (auto &framebuffer: _framebuffers) {
+        vkDestroyFramebuffer(_device, framebuffer, nullptr);
+      }
+      for (auto &imageView: _swapchainImageViews) {
+        vkDestroyImageView(_device, imageView, nullptr);
+      }
+    });
   }
 
 
@@ -360,7 +368,10 @@ namespace walrus {
       info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
       info.pNext = nullptr;
       info.flags = VK_FENCE_CREATE_SIGNALED_BIT; // signal == mutex lock
-      VK_CHECK(vkCreateFence(_device, &info, nullptr, &_fences.render));
+
+      _fencePool.push_back(VK_NULL_HANDLE);
+      VK_CHECK(vkCreateFence(_device, &info, nullptr, &_fencePool.back()));
+      _fences.pRender = &_fencePool.back();
     }
 
     /// SEMAPHORES
@@ -369,9 +380,27 @@ namespace walrus {
       info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
       info.pNext = nullptr;
       info.flags = 0;
-      VK_CHECK(vkCreateSemaphore(_device, &info, nullptr, &_semaphores.present));
-      VK_CHECK(vkCreateSemaphore(_device, &info, nullptr, &_semaphores.render));
+
+      size_t index = _semaphorePool.size();
+      _semaphorePool.push_back(VK_NULL_HANDLE);
+      _semaphorePool.push_back(VK_NULL_HANDLE);
+      VK_CHECK(vkCreateSemaphore(_device, &info, nullptr, &_semaphorePool.at(index)));
+      VK_CHECK(vkCreateSemaphore(_device, &info, nullptr, &_semaphorePool.at(index + 1)));
+      _semaphores.pPresent = &_semaphorePool.at(index);
+      _semaphores.pRender = &_semaphorePool.at(index + 1);
     }
+
+    /// DESTROY
+    _mainDestructionQueue.addDestructor([=]() {
+      vkWaitForFences(_device, _fencePool.size(), _fencePool.data(), true, 1'000'000'000);
+      for (auto &fence: _fencePool) {
+        vkDestroyFence(_device, fence, nullptr);
+      }
+      // TODO: are we not supposed to wait for semaphores the same as for fences?
+      for (auto &semaphore: _semaphorePool) {
+        vkDestroySemaphore(_device, semaphore, nullptr);
+      }
+    });
   }
 
 
@@ -452,17 +481,29 @@ namespace walrus {
         builder.pipelineLayout = _pipelineLayouts.back();
         builder.build(_device, _renderPass, &_pipelines.back());
       }
+      vkDestroyShaderModule(_device, fragmentShader, nullptr);
+      vkDestroyShaderModule(_device, vertexShader, nullptr);
     }
+
+    /// DESTROY
+    _mainDestructionQueue.addDestructor([=]() {
+      for (auto &pipeline: _pipelines) {
+        vkDestroyPipeline(_device, pipeline, nullptr);
+      }
+      for (auto &layout: _pipelineLayouts) {
+        vkDestroyPipelineLayout(_device, layout, nullptr);
+      }
+    });
   }
 
 
 
   void VulkanEngine::draw() {
-    VK_CHECK(vkWaitForFences(_device, 1, &_fences.render, true, 1'000'000'000));
-    VK_CHECK(vkResetFences(_device, 1, &_fences.render));
+    VK_CHECK(vkWaitForFences(_device, 1, _fences.pRender, true, 1'000'000'000));
+    VK_CHECK(vkResetFences(_device, 1, _fences.pRender));
 
     uint32_t imageIndex;
-    VK_CHECK(vkAcquireNextImageKHR(_device, _swapchain, 1'000'000'000, _semaphores.present, nullptr, &imageIndex));
+    VK_CHECK(vkAcquireNextImageKHR(_device, _swapchain, 1'000'000'000, *_semaphores.pPresent, nullptr, &imageIndex));
 
     auto graphicsQueue = _queues.front();
 
@@ -511,12 +552,12 @@ namespace walrus {
       VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
       info.pWaitDstStageMask = &waitStage;
       info.waitSemaphoreCount = 1;
-      info.pWaitSemaphores = &_semaphores.present; // mutex is locked from vkAcquireNextImageKHR above
+      info.pWaitSemaphores = _semaphores.pPresent; // mutex is locked from vkAcquireNextImageKHR above
       info.signalSemaphoreCount = 1;
-      info.pSignalSemaphores = &_semaphores.render; // set rendering mutex
+      info.pSignalSemaphores = _semaphores.pRender; // set rendering mutex
       info.commandBufferCount = 1;
       info.pCommandBuffers = &_commandBuffer;
-      VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &info, _fences.render));
+      VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &info, *_fences.pRender));
     }
 
     /// PRESENT
@@ -527,7 +568,7 @@ namespace walrus {
       info.swapchainCount = 1;
       info.pSwapchains = &_swapchain;
       info.waitSemaphoreCount = 1;
-      info.pWaitSemaphores = &_semaphores.render; // mutex is locked from vkQueueSubmit above
+      info.pWaitSemaphores = _semaphores.pRender; // mutex is locked from vkQueueSubmit above
       info.pImageIndices = &imageIndex;
       VK_CHECK(vkQueuePresentKHR(graphicsQueue, &info));
     }

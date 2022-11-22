@@ -9,8 +9,28 @@
 #include "vk_types.h"
 #include <vector>
 #include <string>
+#include <functional>
+#include <deque>
 
 namespace walrus {
+
+  struct DestructionQueue {
+    std::deque<std::function<void()>> destructor{};
+
+    void addDestructor(std::function<void()> &&function) {
+      destructor.push_back(function);
+    }
+
+    void destroyAll() {
+      for (auto it = destructor.rbegin(); it != destructor.rend(); it++) {
+        (*it)();
+      }
+      destructor.clear();
+    }
+  };
+
+
+
 
   class VulkanEngine {
 
@@ -102,7 +122,12 @@ namespace walrus {
     };
     Shaders _shaders{};
 
+    std::vector<VkSemaphore> _semaphorePool{};
+    std::vector<VkFence> _fencePool;
     sync::generics::RenderSync<VkSemaphore> _semaphores{};
     sync::generics::RenderSync<VkFence> _fences{};
+
+    /// Destructors
+    DestructionQueue _mainDestructionQueue{};
   };
 }
