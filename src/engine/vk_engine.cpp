@@ -409,40 +409,49 @@ namespace walrus {
   void VulkanEngine::init_pipelines() {
     assert(_swapchain != VK_NULL_HANDLE && "initialize swapchain before pipelines");
 
-    /// LOAD SHADERS
-    VkShaderModule triangleFragmentShader;
-    VkShaderModule triangleVertexShader;
-    {
-      std::string fragFilePath = "../../shaders/triangle_red.frag.spv";
-      std::string vertFilePath = "../../shaders/triangle_red.vert.spv";
-      io::printExists(
-        load_shader_module(fragFilePath.data(), &triangleFragmentShader),
-        fragFilePath
-      );
-      io::printExists(
-        load_shader_module(vertFilePath.data(), &triangleVertexShader),
-        vertFilePath
-      );
-    }
+    /// CONSTANTS
+    VkPipelineLayoutCreateInfo info = defaults::pipeline::layoutCreateInfo();
+    PipelineBuilder builder{_swapchainExtent};
+    builder.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    builder.rasterizerState.polygonMode = VK_POLYGON_MODE_FILL;
 
-    /// LAYOUT
-    {
-      // TODO: add descriptor sets and other stuff
-      VkPipelineLayoutCreateInfo info = defaults::pipeline::layoutCreateInfo();
-      VK_CHECK(vkCreatePipelineLayout(_device, &info, nullptr, &_trianglePipelineLayout));
-    }
+    for (auto &shaderPath: _shaders.filePaths) {
+      /// LOAD SHADERS
+      VkShaderModule fragmentShader;
+      VkShaderModule vertexShader;
+      {
+        std::string fragFilePath = shaderPath + ".frag.spv";
+        std::string vertFilePath = shaderPath + ".vert.spv";
+        io::printExists(
+          load_shader_module(fragFilePath.data(), &fragmentShader),
+          fragFilePath
+        );
+        io::printExists(
+          load_shader_module(vertFilePath.data(), &vertexShader),
+          vertFilePath
+        );
+      }
 
-    /// PIPELINE
-    {
-      PipelineBuilder builder{_swapchainExtent};
-      builder.shaderStagesCreate.push_back(
-        defaults::pipeline::shaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, triangleVertexShader));
-      builder.shaderStagesCreate.push_back(
-        defaults::pipeline::shaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, triangleFragmentShader));
-      builder.inputAssemblyCreate.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-      builder.rasterizerCreate.polygonMode = VK_POLYGON_MODE_FILL;
-      builder.pipelineLayout = _trianglePipelineLayout;
-      builder.build(_device, _renderPass, &_trianglePipeline);
+      /// LAYOUT
+      {
+        // TODO: add descriptor sets and other stuff
+        _pipelineLayouts.push_back(VK_NULL_HANDLE);
+        VK_CHECK(vkCreatePipelineLayout(_device, &info, nullptr, &_pipelineLayouts.back()));
+      }
+
+      /// PIPELINE
+      {
+        _pipelines.push_back(VK_NULL_HANDLE);
+        builder.shaderStages.clear();
+        builder.shaderStages.push_back(
+          defaults::pipeline::shaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader)
+        );
+        builder.shaderStages.push_back(
+          defaults::pipeline::shaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, vertexShader)
+        );
+        builder.pipelineLayout = _pipelineLayouts.back();
+        builder.build(_device, _renderPass, &_pipelines.back());
+      }
     }
   }
 
@@ -488,7 +497,7 @@ namespace walrus {
       info.renderArea.extent = _swapchainExtent;
 
       vkCmdBeginRenderPass(_commandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
-      vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _trianglePipeline);
+      vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelines[_shaders.currentIndex]);
       vkCmdDraw(_commandBuffer, 3, 1, 0, 0);
       vkCmdEndRenderPass(_commandBuffer);
     }

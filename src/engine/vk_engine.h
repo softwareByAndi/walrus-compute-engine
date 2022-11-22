@@ -91,8 +91,16 @@ namespace walrus {
     VkRenderPass _renderPass = VK_NULL_HANDLE;
     std::vector<VkFramebuffer> _framebuffers{};
 
-    VkPipelineLayout _trianglePipelineLayout = VK_NULL_HANDLE;
-    VkPipeline _trianglePipeline = VK_NULL_HANDLE;
+    std::vector<VkPipelineLayout> _pipelineLayouts{};
+    std::vector<VkPipeline> _pipelines{};
+    struct Shaders {
+      uint32_t currentIndex = {0};
+      std::vector<std::string> filePaths{
+        "../../shaders/triangle_red",
+        "../../shaders/triangle_RGB"
+      };
+    };
+    Shaders _shaders{};
 
     sync::generics::RenderSync<VkSemaphore> _semaphores{};
     sync::generics::RenderSync<VkFence> _fences{};
