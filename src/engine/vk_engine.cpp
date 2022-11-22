@@ -386,7 +386,7 @@ namespace walrus {
     size_t fileSize = (size_t) file.tellg();
     std::vector<uint32_t> buffer(fileSize / sizeof(uint32_t));
     file.seekg(0);
-    file.read((char *) buffer.data(), fileSize);
+    file.read((char *) buffer.data(), (long) fileSize);
     file.close();
 
     VkShaderModuleCreateInfo info{};
@@ -467,7 +467,7 @@ namespace walrus {
     auto graphicsQueue = _queues.front();
 
     VkClearValue clearValue{};
-    float flash = abs(sin(_frameNumber / 120.f));
+    float flash = abs(sin((float) _frameNumber / 120.f));
     clearValue.color = {{0.f, 0.f, flash, 1.f}};
     _frameNumber++;
 
