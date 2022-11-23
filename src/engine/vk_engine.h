@@ -96,6 +96,12 @@ namespace walrus {
     VkCommandPool _commandPool{};
     VkCommandBuffer _commandBuffer{};
 
+    /// SYNC
+    std::vector<VkSemaphore> _semaphorePool{};
+    std::vector<VkFence> _fencePool;
+    sync::generics::RenderSync<VkSemaphore> _semaphores{};
+    sync::generics::RenderSync<VkFence> _fences{};
+
     /// RENDERING
     int _frameNumber{0};
     Window _window{800, 600, "Vulkan Window"}; // TODO: don't create window for compute only tasks
@@ -122,10 +128,6 @@ namespace walrus {
     };
     Shaders _shaders{};
 
-    std::vector<VkSemaphore> _semaphorePool{};
-    std::vector<VkFence> _fencePool;
-    sync::generics::RenderSync<VkSemaphore> _semaphores{};
-    sync::generics::RenderSync<VkFence> _fences{};
 
     /// Destructors
     DestructionQueue _mainDestructionQueue{};
