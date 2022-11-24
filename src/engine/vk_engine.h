@@ -2,11 +2,13 @@
 
 #include "engine/rendering/window/window.hpp"
 #include "engine/rendering/swapchain/swapchain.hpp"
+#include "engine/rendering/mesh/mesh.hpp"
 
 #include "engine/compute/device/device.hpp"
 #include "engine/compute/synchronize/generics.hpp"
 
-#include "vk_types.h"
+#include <vk_types.h>
+
 #include <vector>
 #include <string>
 #include <functional>
@@ -64,6 +66,10 @@ namespace walrus {
 
     void init_pipelines();
 
+    void load_meshes();
+
+    void upload_mesh(Mesh& mesh);
+
 
     void draw();
 
@@ -102,6 +108,9 @@ namespace walrus {
     sync::generics::RenderSync<VkSemaphore> _semaphores{};
     sync::generics::RenderSync<VkFence> _fences{};
 
+    /// Memory
+    VmaAllocator _allocator = nullptr;
+
     /// RENDERING
     int _frameNumber{0};
     Window _window{800, 600, "Vulkan Window"}; // TODO: don't create window for compute only tasks
@@ -128,6 +137,11 @@ namespace walrus {
     };
     Shaders _shaders{};
 
+    struct Test {
+      Mesh mesh{};
+      VkPipeline* pipeline = VK_NULL_HANDLE;
+    };
+    Test _test{};
 
     /// Destructors
     DestructionQueue _mainDestructionQueue{};

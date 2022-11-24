@@ -15,6 +15,10 @@
 
 #include <GLFW/glfw3.h>
 
+#define VMA_IMPLEMENTATION
+
+#include "vk_mem_alloc.h"
+
 #include <iostream>
 #include <cmath>
 #include <stdexcept>
@@ -40,6 +44,7 @@ namespace walrus {
         init_renderpass();
         init_framebuffers();
         init_pipelines();
+        load_meshes();
       }
       std::cout << io::to_color_string(io::LIGHT_BLUE, "vulkan initialized!") << std::endl;
       _isInitialized = true;
@@ -56,6 +61,7 @@ namespace walrus {
       if (_task & GRAPHICS) {
         vkDestroySurfaceKHR(_instance, _surface, nullptr);
       }
+      vmaDestroyAllocator(_allocator);
       vkDestroyDevice(_device, nullptr);
       if (_enableValidationLayers) {
         /// DESTROY DEBUG MESSENGER
@@ -176,6 +182,16 @@ namespace walrus {
         assert(!graphics || queue.support.isComplete() &&
           "for current logic, all graphics tasks must have complete support");
       }
+    }
+
+
+    /// MEMORY ALLOCATOR
+    {
+      VmaAllocatorCreateInfo info{};
+      info.physicalDevice = _physicalDevice;
+      info.device = _device;
+      info.instance = _instance;
+      vmaCreateAllocator(&info, &_allocator);
     }
   }
 
@@ -497,6 +513,63 @@ namespace walrus {
   }
 
 
+
+
+  // FIXME: refactor out test code
+  void VulkanEngine::load_meshes() {
+    _test.mesh.vertices.resize(3);
+    _test.mesh.vertices[0].position = {1.f, 1.f, 0.f};
+    _test.mesh.vertices[1].position = {-1.f, 1.f, 0.f};
+    _test.mesh.vertices[2].position = {0.f, -1.f, 0.f};
+    _test.mesh.vertices[0].color = {0.f, 1.f, 0.f};
+    _test.mesh.vertices[1].color = {0.f, 1.f, 0.f};
+    _test.mesh.vertices[2].color = {0.f, 1.f, 0.f};
+    // TODO: add normals
+    upload_mesh(_test.mesh);
+  }
+
+
+
+
+  void VulkanEngine::upload_mesh(Mesh &mesh) {
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = mesh.vertices.size() * sizeof(walrus::Vertex);
+    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+
+    VmaAllocationCreateInfo vmaAllocInfo{};
+    vmaAllocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+    VK_CHECK(vmaCreateBuffer(
+      _allocator,
+      &bufferInfo,
+      &vmaAllocInfo,
+      &mesh.vertexBuffer.buffer,
+      &mesh.vertexBuffer.allocation,
+      nullptr
+    ));
+    _mainDestructionQueue.addDestructor([=]() {
+      vmaDestroyBuffer(_allocator, mesh.vertexBuffer.buffer, mesh.vertexBuffer.allocation);
+    });
+
+    void *data;
+    vmaMapMemory(_allocator, mesh.vertexBuffer.allocation, &data);
+    memcpy(data, mesh.vertices.data(), mesh.vertices.size() * sizeof(walrus::Vertex));
+    vmaUnmapMemory(_allocator, mesh.vertexBuffer.allocation);
+  }
+
+
+
+
+
+
+
+
+
+
+  /// --------------------------------------------------
+  /// PRESENTATION
+  /// --------------------------------------------------
 
   void VulkanEngine::draw() {
     VK_CHECK(vkWaitForFences(_device, 1, _fences.pRender, true, 1'000'000'000));
