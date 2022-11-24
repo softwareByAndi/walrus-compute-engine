@@ -30,7 +30,11 @@ add_executable(walrus_compute_engine
         engine/rendering/pipelines/builder/pipeline_builder.hpp
         engine/rendering/window/events/keys/keys.cpp
         engine/rendering/window/events/keys/keys.hpp
-        engine/rendering/window/events/window_events.cpp engine/rendering/window/events/window_events.hpp)
+        engine/rendering/window/events/window_events.cpp
+        engine/rendering/window/events/window_events.hpp
+        engine/rendering/mesh/mesh.cpp
+        engine/rendering/mesh/mesh.hpp
+        )
 
 set_property(TARGET walrus_compute_engine PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:walrus_compute_engine>")
 
