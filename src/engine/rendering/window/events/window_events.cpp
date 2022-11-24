@@ -9,7 +9,7 @@ namespace walrus {
     _previousKeys[key] = false;
   }
 
-  bool WindowEvents::poll() {
+  void WindowEvents::poll() {
     for (auto &[key, value]: _currentKeys) {
       _previousKeys[key] = _currentKeys[key];
       _currentKeys[key] = glfwGetKey(_window, key) == GLFW_PRESS;

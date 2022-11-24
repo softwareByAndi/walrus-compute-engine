@@ -19,7 +19,7 @@ namespace walrus {
 
     void addKey(keys::key_t key);
 
-    bool poll();
+    void poll();
 
     bool keyPress(keys::key_t key);
 
