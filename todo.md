@@ -19,6 +19,11 @@ finish basic vulkan setup from ( [vulkan-tutorial.com](https://vulkan-tutorial.c
 - [ ] generating mipmaps  
 - [ ] multisampling  
 
+
+### Voxel Terrain Generation
+- [ ] implement the Transvoxel algorithm for generating voxel terrain (solid colors)
+
+
 ### scene abstraction:
 
 - [ ] basic entity component system  
@@ -28,19 +33,68 @@ finish basic vulkan setup from ( [vulkan-tutorial.com](https://vulkan-tutorial.c
   - _don't bother with GUI scene builder yet._
   - [ ] add `.scene` scripts w/ live re-load  
 
+- [ ] add basic camera controls  
+  - [ ] camera movement  
+  - [ ] camera rotation  
+  - [ ] camera zoom  
+  - [ ] camera FOV
+
+
 ### basic physics:
 
 eventually this will be handled by a molecular abstraction engine, but for now, lets get some basic box physics
 
 - [ ] add [ReactPhysics3D](https://www.reactphysics3d.com)
-  - need basic collision detection (a number of collision shapes for each object)
-  - need basic physics:  
+  - [ ] need basic collision detection _(a number of collision shapes for each object)_
+    - [ ] collision detection
+    - [ ] collision resolution
+    - [ ] collision shapes
+  - [ ] need basic physics:
     _( for now, objects with complex movements will be simulated using a set of objects tied together using anchors )_
-    - gravity
-    - acceleration
-    - velocity
-    - inertia
-  - need anchor points  
+    - [ ] gravity
+    - [ ] acceleration
+    - [ ] velocity
+    - [ ] inertia
+    - [ ] anchor points
+
+<br>
+<br>
+<hr>
+<br>
+
+# bare-bones open world test:
+
+build a low-poly infinite world with basic terrain generation, basic physics, and simple biomes w/ randomly generated trees, rocks, and other objects.
+- shoot for a voxel based minecraft knock-off
+
+  - terrain edits:
+    - [ ] create
+    - [ ] destroy
+    - [ ] smooth
+    - [ ] flatten
+  - player: 
+    - [ ] controls
+    - [ ] inventory
+    - [ ] crafting
+    - [ ] building
+    - [ ] combat
+  - enemy:
+    - [ ] logic.
+    - [ ] combat
+    - [ ] spawning
+    - [ ] loot
+    - [ ] pathfinding
+  - npc:
+    - [ ] logic
+    - [ ] dialogue (chatGPT?)
+    - [ ] trading
+    - [ ] quests
+    - [ ] spawning
+    - [ ] loot
+    - [ ] pathfinding
+    - [ ] combat
+    - [ ] inventory
+
 
 <br>
 <br>
@@ -84,9 +138,7 @@ Simulations for simulations' sake are boring. Let's give them a quick applicatio
 
 ### war game: 
 
-castle defence w/ tanks & drones
-
-- [ ] add rudimentary procedurally generated environments
+castle defence w/ tanks & drones in procedurally generated environments
 
 - __Player goal (optional):__ 
   - infiltrate enemy lines & deliver payload.
