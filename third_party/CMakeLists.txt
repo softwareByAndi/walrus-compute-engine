@@ -1,3 +1,6 @@
+message(STATUS "Configuring external libraries")
+message("")
+
 find_package(Vulkan REQUIRED)
 
 add_library(glm INTERFACE)
@@ -13,7 +16,7 @@ target_include_directories(vma INTERFACE vma)
 target_sources(tinyobjloader PRIVATE
         tinyobjloader/tiny_obj_loader.h
         tinyobjloader/tiny_obj_loader.cc
-        )
+)
 
 target_include_directories(tinyobjloader PUBLIC tinyobjloader)
 
