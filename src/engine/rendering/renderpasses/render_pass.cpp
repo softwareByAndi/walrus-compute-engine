@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <iterator>
+#include <cassert>
 
 namespace walrus {
 

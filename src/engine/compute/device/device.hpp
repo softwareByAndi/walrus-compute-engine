@@ -26,9 +26,14 @@ namespace walrus {
     );
 
     static std::vector<const char *> getExtensions(DeviceTask task = ALL) {
-      // TODO: only macOS needs the portability subset?
-      // TODO: const char * memory leak?
-      std::vector<const char *> extensions = {"VK_KHR_portability_subset"};
+      // FIXME : const char * memory leak?
+      #ifdef __APPLE__
+        std::vector<const char *> extensions = {"VK_KHR_portability_subset"}; // only macOS needs the portability subset
+      #elif defined(__linux__)
+        std::vector<const char *> extensions = {};
+      #else
+        #error "This code has only been build for macOS or Linux systems."
+      #endif
       if (task & GRAPHICS) {
         extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
       }

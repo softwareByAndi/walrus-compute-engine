@@ -105,7 +105,13 @@ namespace walrus {
       VkInstanceCreateInfo createInfo{};
       createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
       createInfo.pApplicationInfo = &appInfo;
-      createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR; // TODO: portability flag is only needed for macOS
+      #ifdef __APPLE__
+        createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR; // portability flag is only needed for macOS
+      #elif defined(__linux__)
+        // do nothing?
+      #else
+        #error "This code has only been build for macOS or Linux systems."
+      #endif
       createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
       createInfo.ppEnabledExtensionNames = extensions.data();
       createInfo.enabledLayerCount = 0;

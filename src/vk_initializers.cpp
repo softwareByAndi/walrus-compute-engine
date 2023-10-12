@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <iterator>
+#include <cstring>
 
 namespace vkInit {
 
@@ -31,12 +32,18 @@ namespace vkInit {
   namespace defaults {
 
     std::vector<const char *> getRequiredExtensions(bool enableValidationLayers) {
-      // TODO: portability extension is only required for macOS?
-      // TODO: const char * memory leak?
+      // FIXME: const char * memory leak?
       std::vector<const char *> extensions = {
-        VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
         VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
       };
+      #ifdef __APPLE__
+        // portability extension is only required for macOS
+        extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+      #elif defined(__linux__)
+        // do nothing?
+      #else
+        #error "This code has only been build for macOS or Linux systems."
+      #endif
       if (enableValidationLayers) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
       }
