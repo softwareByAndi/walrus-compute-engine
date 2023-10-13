@@ -21,7 +21,12 @@ message("Vulkan include: ${Vulkan_INCLUDE_DIRS}")
 message("Vulkan libraries: ${Vulkan_LIBRARIES}")
 message("Vulkan definitions: ${Vulkan_DEFINITIONS}")
 message("Vulkan dir: ${vulkan_DIR}")
+message("Vulkan SDK: ${VULKAN_SDK}")
 message("Vulkan SDK: $ENV{VULKAN_SDK}")
+message("Vulkan SDK: ${Vulkan_SDK}")
+
+message("")
+message("GLFW DIR: ${glfw3_DIR}")
 
 message("")
 
