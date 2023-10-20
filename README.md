@@ -12,7 +12,8 @@ An API has not yet been developed, but will be when the MVP is complete.
 <hr>
 
 # setup
-setup environment following the vulkan tutorial
+setup environment following the vulkan tutorial @ [vulkan-tutorial.com](https://vulkan-tutorial.com)
+
 
 currently only supported for MacOS (M1 chip) & Ubuntu Linux (v22.04)
 - MacOS version may be broken until linux setup is working properly
