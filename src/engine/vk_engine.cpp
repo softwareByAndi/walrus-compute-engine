@@ -166,7 +166,11 @@ namespace walrus {
       // select most suited device
       int selectedDeviceIndex = -1;
       for (int i = 0; i < devicesInfos.size(); i++) {
-        if (selectedDeviceIndex < 0 || devicesInfos[i].score > devicesInfos[selectedDeviceIndex].score) {
+        // FIXME : add support for non-general purpose devices
+        if (devicesInfos[i].queueData.size() == 1 // FIXME : a hack to select a general purpose device
+                && (selectedDeviceIndex < 0
+                || devicesInfos[i].score > devicesInfos[selectedDeviceIndex].score))
+        {
           selectedDeviceIndex = i;
         }
       }
