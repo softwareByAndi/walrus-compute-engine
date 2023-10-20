@@ -17,7 +17,7 @@ namespace io {
   void printExists(bool exists, std::string text, bool newLine) {
     if (exists) { std::cout << COLORS[Color::GREEN] << " + "; }
     else { std::cout << COLORS[Color::RED] << " - "; }
-    std::cout << text << COLORS[Color::RESET];;
+    std::cout << text << COLORS[Color::RESET];
     if (newLine) { std::cout << std::endl; }
   }
 

@@ -7,9 +7,13 @@
 #include <string>
 #include <vector>
 
+// this is an iostream wrapper that adds colors to the terminal output
+// to enable easier reading / linting of console output
+
 namespace io {
   const std::string ESC = "\033[";
 
+  // an enum of available colors for easy selection
   enum Color {
     BLACK,
     RED,
@@ -29,6 +33,9 @@ namespace io {
     LIGHT_GRAY,
     RESET,
   };
+
+  // this vector maps the enum values to their actual codes.
+  // using the default enum value as an index into this array.
   const std::vector<std::string> COLORS = {
     ESC + "0;30m", // BLACK
     ESC + "0;31m", // RED
@@ -49,12 +56,50 @@ namespace io {
     ESC + "0m", // RESET
   };
 
+  /**
+   * @brief wraps the text in terminal color codes.
+   *
+   * This function prepends & appends the chosen color code
+   * to either side of the provided string.
+   *
+   * @param color The selected color to make the string -- as selected from `io::Colors` in `pretty_io.hpp`
+   * @param text The text to be wrapped in colors
+   *
+   * @return string -- the provided text, wrapped in terminal color codes
+   */
   std::string to_color_string(Color color, std::string text);
 
+  /**
+   * @description converts an integer to string and wraps it in terminal color codes
+   *
+   * @description This function prepends & appends the chosen color code
+   * to either side of the provided integer.
+   *
+   * @param color The selected color to make the string -- as selected from `io::Colors` in `pretty_io.hpp`
+   * @param num The integer to be wrapped in colors
+   *
+   * @return string -- a string of the provided integer, wrapped in terminal color codes
+   */
   std::string to_color_string(Color color, int num);
 
+  /**
+   * @description colors the text in green or red and prints to terminal via `std::cout`
+   *
+   * @param exists <b>if true:</b> then wraps text in green and prepends ` + ` to the text\n
+   * <b>if false:</b> then wraps the text in red, and prepends ` - ` to the text
+   * @param text the text to wrap and print
+   * @param newLine if true, prints a new line
+   *
+   * @return void
+   *
+   * @example ` + hello world`
+   * @example ` - hello world`
+   */
   void printExists(bool exists, std::string text, bool newLine = true);
 
+  /**
+   * @description prints all colors to to the terminal
+   */
   void printColorTest();
 }
 
