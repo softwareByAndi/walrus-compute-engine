@@ -29,23 +29,31 @@
 
 namespace walrus {
 
+  /// Init various vulkan structures.
   void VulkanEngine::init(DeviceTask task) {
+    /// need to destroy before reinitializing
     if (!_isInitialized) {
       _task = task;
+      /// output requested features to console
       std::cout << "\nenabled features:";
       printTaskFeatures(_task);
       std::cout << "\n\n";
 
-      init_vulkan();
-      init_commands();
-      init_sync_structures();
+      /// init required structures
+      init_vulkan();           /// vulkan instance, surface(opt), debug(opt), messenger, device, memory allocator
+      init_commands();         /// command pool, command buffers, destructor queue
+      init_sync_structures();  /// fences, semaphores, destructor queue
+
+      /// init graphics structures
       if (_task & DeviceTask::GRAPHICS) {
-        init_swapchain();
-        init_renderpass();
-        init_framebuffers();
-        init_pipelines();
-        load_meshes();
+        init_swapchain();     /// swapchain & images, image views, destructor queue
+        init_renderpass();    /// render pass, destructor queue
+        init_framebuffers();  /// framebuffers, destructor queue
+        init_pipelines();     /// load shaders, pipeline-layout, pipelines, destroy shaders, destructor queue
+        load_meshes();        /// test triangle
       }
+
+      /// initialization complete
       std::cout << io::to_color_string(io::LIGHT_BLUE, "vulkan initialized!") << std::endl;
       _isInitialized = true;
     } else {
@@ -53,11 +61,17 @@ namespace walrus {
     }
   }
 
-
+  /// destroy all vulkan objects.
   void VulkanEngine::destroy() {
     if (_isInitialized) {
+      /// wait for device to complete current tasks. not waiting can cause segfaults
       vkDeviceWaitIdle(_device);
+
+      /// the main destruction queue is populated during initialization
+      /// and is used to ensure that objects are destroyed in the proper order (typically reverse init order)
       _mainDestructionQueue.destroyAll();
+
+      /// manually destroy surface, memory allocator, device, validation layers & debug messenger, vulkan instance, window
       if (_task & GRAPHICS) {
         vkDestroySurfaceKHR(_instance, _surface, nullptr);
       }
@@ -166,7 +180,11 @@ namespace walrus {
       // select most suited device
       int selectedDeviceIndex = -1;
       for (int i = 0; i < devicesInfos.size(); i++) {
-        if (selectedDeviceIndex < 0 || devicesInfos[i].score > devicesInfos[selectedDeviceIndex].score) {
+        // FIXME : add support for non-general purpose devices
+        if (devicesInfos[i].queueData.size() == 1 // FIXME : a hack to select a general purpose device
+                && (selectedDeviceIndex < 0
+                || devicesInfos[i].score > devicesInfos[selectedDeviceIndex].score))
+        {
           selectedDeviceIndex = i;
         }
       }
@@ -209,11 +227,13 @@ namespace walrus {
     {
       assert(_device != VK_NULL_HANDLE && "device not setup");
       assert(!_queues.empty() && !_deviceInfo.queueData.empty() && "missing queues?");
-      assert(_deviceInfo.queueData[0].support.compute &&
+      // FIXME : hard coded queue index? what's the point of all queue families supporting all features if we only use the one queue??
+      const int queueFamilyIndex = 0;
+      assert(_deviceInfo.queueData[queueFamilyIndex].support.compute &&
                "current logic only supports queues with at least compute...");
-      assert(!(_task & DeviceTask::GRAPHICS) || _deviceInfo.queueData[0].support.isComplete() &&
+      assert(!(_task & DeviceTask::GRAPHICS) || _deviceInfo.queueData[queueFamilyIndex].support.isComplete() &&
         "current logic only supports queues with complete support...");
-      auto createInfo = CommandPool::createInfo(0, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+      auto createInfo = CommandPool::createInfo(queueFamilyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
       VK_CHECK(vkCreateCommandPool(_device, &createInfo, nullptr, &_commandPool));
     }
 
