@@ -209,11 +209,13 @@ namespace walrus {
     {
       assert(_device != VK_NULL_HANDLE && "device not setup");
       assert(!_queues.empty() && !_deviceInfo.queueData.empty() && "missing queues?");
-      assert(_deviceInfo.queueData[0].support.compute &&
+      // FIXME : hard coded queue index? what's the point of all queue families supporting all features if we only use the one queue??
+      const int queueFamilyIndex = 0;
+      assert(_deviceInfo.queueData[queueFamilyIndex].support.compute &&
                "current logic only supports queues with at least compute...");
-      assert(!(_task & DeviceTask::GRAPHICS) || _deviceInfo.queueData[0].support.isComplete() &&
+      assert(!(_task & DeviceTask::GRAPHICS) || _deviceInfo.queueData[queueFamilyIndex].support.isComplete() &&
         "current logic only supports queues with complete support...");
-      auto createInfo = CommandPool::createInfo(0, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+      auto createInfo = CommandPool::createInfo(queueFamilyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
       VK_CHECK(vkCreateCommandPool(_device, &createInfo, nullptr, &_commandPool));
     }
 
