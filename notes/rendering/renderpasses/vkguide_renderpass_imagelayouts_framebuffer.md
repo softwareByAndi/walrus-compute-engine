@@ -14,7 +14,7 @@ A Renderpass will render into a `Framebuffer`. The framebuffer `links` to the im
 
 ## The general use of a renderpass when encoding commands is like this:
 
-```C++
+``` cpp
 vkBeginCommandBuffer(cmd, ...);
 
 vkCmdBeginRenderPass(cmd, ...);
