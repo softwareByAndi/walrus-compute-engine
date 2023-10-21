@@ -340,7 +340,9 @@ namespace walrus {
         TODO: cover ownership chapters to implement exclusive logic instead of concurrent logic
       */
       std::vector<uint32_t> queueIndices(_queues.size());
-      for (uint32_t i = 0; i < _queues.size(); i++) { queueIndices[i] = i; }
+      for (uint32_t i = 0; i < _queues.size(); i++) {
+        queueIndices[i] = i;
+      }
       if (_queues.size() > 1) {
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         /// specify between which queue families image ownership will be shared. for now, image ownership will be shared across all queues.
