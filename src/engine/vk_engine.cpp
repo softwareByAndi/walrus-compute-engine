@@ -39,12 +39,12 @@ namespace walrus {
       printTaskFeatures(_task);
       std::cout << "\n\n";
 
-      /// init required structures
+      /// engine_initialization required structures
       init_vulkan();           /// vulkan instance, surface(opt), debug(opt), messenger, device, memory allocator
       init_commands();         /// command pool, command buffers, destructor queue
       init_sync_structures();  /// fences, semaphores, destructor queue
 
-      /// init graphics structures
+      /// engine_initialization graphics structures
       if (_task & DeviceTask::GRAPHICS) {
         init_swapchain();     /// swapchain & images, image views, destructor queue
         init_renderpass();    /// render pass, destructor queue
@@ -68,7 +68,7 @@ namespace walrus {
       vkDeviceWaitIdle(_device);
 
       /// the main destruction queue is populated during initialization
-      /// and is used to ensure that objects are destroyed in the proper order (typically reverse init order)
+      /// and is used to ensure that objects are destroyed in the proper order (typically reverse engine_initialization order)
       _mainDestructionQueue.destroyAll();
 
       /// manually destroy surface, memory allocator, device, validation layers & debug messenger, vulkan instance, window
@@ -115,7 +115,11 @@ namespace walrus {
         }
       }
       // FIXME: check extension support
+      // instantiate debug info here, so that the reference remains in scope
+      // when struct is passed to create function
       VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = vkInit::defaults::debugMessengerCreateInfo();
+
+      // define the instance parameters (used to compile parameters /info for application, extensions, and validation layers)
       VkInstanceCreateInfo createInfo{};
       createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
       createInfo.pApplicationInfo = &appInfo;
@@ -131,6 +135,7 @@ namespace walrus {
       createInfo.enabledLayerCount = 0;
       createInfo.pNext = nullptr;
       if (_enableValidationLayers) {
+        // attach validation layers
         createInfo.enabledLayerCount = _validationLayers.size();
         createInfo.ppEnabledLayerNames = _validationLayers.data();
         createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *) &debugCreateInfo;
@@ -168,7 +173,12 @@ namespace walrus {
 
     /// DEVICE
     {
-      auto devicesInfos = DeviceInfo::getDeviceInfos(_instance, &_physicalDevices, _surface, _task);
+      auto devicesInfos = DeviceInfo::getDeviceInfos(
+        _instance,
+        &_physicalDevices,
+        _surface,
+        _task
+      );
       std::cout << std::endl;
       std::cout << "physical device count: " << _physicalDevices.size() << std::endl;
       std::cout << "available devices: \n____________________________________\n";
@@ -182,29 +192,43 @@ namespace walrus {
       for (int i = 0; i < devicesInfos.size(); i++) {
         // FIXME : add support for non-general purpose devices
         if (devicesInfos[i].queueData.size() == 1 // FIXME : a hack to select a general purpose device
-                && (selectedDeviceIndex < 0
-                || devicesInfos[i].score > devicesInfos[selectedDeviceIndex].score))
-        {
+            && (selectedDeviceIndex < 0
+                || devicesInfos[i].score > devicesInfos[selectedDeviceIndex].score)
+        ){
           selectedDeviceIndex = i;
         }
       }
-      if (selectedDeviceIndex < 0 || devicesInfos[selectedDeviceIndex].score <= 0) {
+      if (selectedDeviceIndex < 0
+          || devicesInfos[selectedDeviceIndex].score <= 0
+      ){
         throw std::runtime_error("failed to find a suitable GPU!");
       }
       _deviceInfo.clone(devicesInfos[selectedDeviceIndex]);
       _physicalDevice = _physicalDevices.at(selectedDeviceIndex);
-      DeviceInfo::createLogicalDevice(_deviceInfo, _physicalDevice, &_device, _queues);
+      DeviceInfo::createLogicalDevice(
+        _deviceInfo,
+        _physicalDevice,
+        &_device,
+        _queues
+      );
+
+      std::cout << "queue size: " << _queues.size() << std::endl;
+      std::cout << "queue data size: " << _deviceInfo.queueData.size() << std::endl;
 
       // TODO: refactor commands and queue logic to work with not-complete-support queue families.
-      assert(!_deviceInfo.queueData.empty() && "missing queues?");
-      assert(_queues.size() == _deviceInfo.queueData.size() && "uh oh... something's wrong with the queue setup...");
+      assert( !_deviceInfo.queueData.empty()
+              && "missing queues?");
+      assert( _queues.size() == _deviceInfo.queueData.size()
+              && "uh oh... something's wrong with the queue setup...");
       bool graphics = _task & DeviceTask::GRAPHICS;
       bool compute = _task & DeviceTask::COMPUTE;
       for (const auto &queue: _deviceInfo.queueData) {
-        assert(!compute || queue.support.compute &&
-          "for current logic, all queues must support the device specified task");
-        assert(!graphics || queue.support.isComplete() &&
-          "for current logic, all graphics tasks must have complete support");
+        assert( !compute
+                || queue.support.compute
+                && "for current logic, all queues must support the device specified task");
+        assert( !graphics
+                || queue.support.isComplete()
+                && "for current logic, all graphics tasks must have complete support");
       }
     }
 
@@ -225,16 +249,28 @@ namespace walrus {
   void VulkanEngine::init_commands() {
     /// COMMAND POOL
     {
-      assert(_device != VK_NULL_HANDLE && "device not setup");
-      assert(!_queues.empty() && !_deviceInfo.queueData.empty() && "missing queues?");
       // FIXME : hard coded queue index? what's the point of all queue families supporting all features if we only use the one queue??
       const int queueFamilyIndex = 0;
-      assert(_deviceInfo.queueData[queueFamilyIndex].support.compute &&
-               "current logic only supports queues with at least compute...");
-      assert(!(_task & DeviceTask::GRAPHICS) || _deviceInfo.queueData[queueFamilyIndex].support.isComplete() &&
-        "current logic only supports queues with complete support...");
-      auto createInfo = CommandPool::createInfo(queueFamilyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-      VK_CHECK(vkCreateCommandPool(_device, &createInfo, nullptr, &_commandPool));
+      assert( _device != VK_NULL_HANDLE
+              && "device not setup");
+      assert( !_queues.empty()
+              && !_deviceInfo.queueData.empty()
+              && "missing queues?");
+      assert( _deviceInfo.queueData[queueFamilyIndex].support.compute
+              && "current logic only supports queues with at least compute...");
+      assert( !(_task & DeviceTask::GRAPHICS)
+              || _deviceInfo.queueData[queueFamilyIndex].support.isComplete()
+              && "current logic only supports queues with complete support...");
+      auto createInfo = CommandPool::createInfo(
+        queueFamilyIndex,
+        VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
+      );
+      VK_CHECK(vkCreateCommandPool(
+        _device,
+        &createInfo,
+        nullptr,
+        &_commandPool
+      ));
     }
 
     /// COMMAND BUFFER
@@ -244,7 +280,13 @@ namespace walrus {
     }
 
     /// DESTROY
-    _mainDestructionQueue.addDestructor([=]() { vkDestroyCommandPool(_device, _commandPool, nullptr); });
+    _mainDestructionQueue.addDestructor([=]() {
+      vkDestroyCommandPool(
+        _device,
+        _commandPool,
+        nullptr
+      );
+    });
   }
 
 
@@ -311,11 +353,21 @@ namespace walrus {
       }
 
       VK_CHECK(vkCreateSwapchainKHR(_device, &createInfo, nullptr, &_swapchain));
-      vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, nullptr);
+      vkGetSwapchainImagesKHR(
+        _device,
+        _swapchain,
+        &imageCount,
+        nullptr
+      );
       assert(imageCount > 0 && "no images?");
       assert(_swapchainImages.empty() && "swapchain re-creation not supported yet.");
       _swapchainImages.resize(imageCount);
-      vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, _swapchainImages.data());
+      vkGetSwapchainImagesKHR(
+        _device,
+        _swapchain,
+        &imageCount,
+        _swapchainImages.data()
+      );
     }
 
     /// IMAGE VIEWS
@@ -342,7 +394,13 @@ namespace walrus {
     }
 
     /// DESTROY
-    _mainDestructionQueue.addDestructor([=]() { vkDestroySwapchainKHR(_device, _swapchain, nullptr); });
+    _mainDestructionQueue.addDestructor([=]() {
+      vkDestroySwapchainKHR(
+        _device,
+        _swapchain,
+        nullptr
+      );
+    });
   }
 
 
@@ -358,7 +416,13 @@ namespace walrus {
     VK_CHECK(vkCreateRenderPass(_device, &renderPassCreateInfo.createInfo, nullptr, &_renderPass));
 
     /// DESTROY
-    _mainDestructionQueue.addDestructor([=]() { vkDestroyRenderPass(_device, _renderPass, nullptr); });
+    _mainDestructionQueue.addDestructor([=]() {
+      vkDestroyRenderPass(
+        _device,
+        _renderPass,
+        nullptr
+      );
+    });
   }
 
 
@@ -434,13 +498,27 @@ namespace walrus {
 
     /// DESTROY
     _mainDestructionQueue.addDestructor([=]() {
-      vkWaitForFences(_device, _fencePool.size(), _fencePool.data(), true, 1'000'000'000);
+      vkWaitForFences(
+        _device,
+        _fencePool.size(),
+        _fencePool.data(),
+        true,
+        1'000'000'000
+      );
       for (auto &fence: _fencePool) {
-        vkDestroyFence(_device, fence, nullptr);
+        vkDestroyFence(
+          _device,
+          fence,
+          nullptr
+        );
       }
       // TODO: are we not supposed to wait for semaphores the same as for fences?
       for (auto &semaphore: _semaphorePool) {
-        vkDestroySemaphore(_device, semaphore, nullptr);
+        vkDestroySemaphore(
+          _device,
+          semaphore,
+          nullptr
+        );
       }
     });
   }
@@ -467,7 +545,14 @@ namespace walrus {
     info.pCode = buffer.data();
 
     VkShaderModule shaderModule;
-    if (vkCreateShaderModule(_device, &info, nullptr, &shaderModule) != VK_SUCCESS) {
+    if (
+      vkCreateShaderModule(
+        _device,
+        &info,
+        nullptr,
+        &shaderModule
+      ) != VK_SUCCESS
+    ){
       return false;
     }
     *outShaderModule = shaderModule;
@@ -579,9 +664,20 @@ namespace walrus {
     });
 
     void *data;
-    vmaMapMemory(_allocator, mesh.vertexBuffer.allocation, &data);
-    memcpy(data, mesh.vertices.data(), mesh.vertices.size() * sizeof(walrus::Vertex));
-    vmaUnmapMemory(_allocator, mesh.vertexBuffer.allocation);
+    vmaMapMemory(
+      _allocator,
+      mesh.vertexBuffer.allocation,
+      &data
+    );
+    memcpy(
+      data,
+      mesh.vertices.data(),
+      mesh.vertices.size() * sizeof(walrus::Vertex)
+    );
+    vmaUnmapMemory(
+      _allocator,
+      mesh.vertexBuffer.allocation
+    );
   }
 
 
@@ -598,17 +694,34 @@ namespace walrus {
   /// --------------------------------------------------
 
   void VulkanEngine::draw() {
-    VK_CHECK(vkWaitForFences(_device, 1, _fences.pRender, true, 1'000'000'000));
-    VK_CHECK(vkResetFences(_device, 1, _fences.pRender));
-
     uint32_t imageIndex;
-    VK_CHECK(vkAcquireNextImageKHR(_device, _swapchain, 1'000'000'000, *_semaphores.pPresent, nullptr, &imageIndex));
+    VK_CHECK(vkWaitForFences(
+      _device,
+      1,
+      _fences.pRender,
+      true,
+      1'000'000'000
+    ));
+    VK_CHECK(vkResetFences(_device, 1, _fences.pRender));
+    VK_CHECK(vkAcquireNextImageKHR(
+      _device,
+      _swapchain,
+      1'000'000'000,
+      *_semaphores.pPresent,
+      nullptr,
+      &imageIndex
+    ));
 
     auto graphicsQueue = _queues.front();
 
     VkClearValue clearValue{};
     float flash = abs(sin((float) _frameNumber / 120.f));
-    clearValue.color = {{0.f, 0.f, flash, 1.f}};
+    clearValue.color = {{
+      0.f,
+      0.f,
+      flash,
+      1.f
+    }};
     _frameNumber++;
 
     /// CMD BUFFER BEGIN
@@ -636,10 +749,26 @@ namespace walrus {
       info.renderArea.offset.y = 0;
       info.renderArea.extent = _swapchainExtent;
 
-      vkCmdBeginRenderPass(_commandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
-      vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelines[_shaders.currentIndex]);
-      vkCmdDraw(_commandBuffer, 3, 1, 0, 0);
-      vkCmdEndRenderPass(_commandBuffer);
+      vkCmdBeginRenderPass(
+        _commandBuffer,
+        &info,
+        VK_SUBPASS_CONTENTS_INLINE
+      );
+      vkCmdBindPipeline(
+        _commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _pipelines[_shaders.currentIndex]
+      );
+      vkCmdDraw(
+        _commandBuffer,
+        3,
+        1,
+        0,
+        0
+      );
+      vkCmdEndRenderPass(
+        _commandBuffer
+      );
     }
     VK_CHECK(vkEndCommandBuffer(_commandBuffer));
 
