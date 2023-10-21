@@ -11,12 +11,16 @@
 
 namespace walrus {
 
-  void printTaskFeatures(DeviceTask &task) {
+  void printTaskFeatures(
+        DeviceTask &task
+  ){
     io::printExists(task & GRAPHICS, "graphics", false);
     io::printExists(task & COMPUTE, "compute", false);
   }
 
-  DeviceInfo::QueueFamilyData::QueueFamilyData(VkQueueFamilyProperties &vkProperties) {
+  DeviceInfo::QueueFamilyData::QueueFamilyData(
+        VkQueueFamilyProperties &vkProperties
+  ){
     support = Support{};
     support.graphics = (vkProperties.queueFlags & VK_QUEUE_GRAPHICS_BIT) > 0;
     support.compute = (vkProperties.queueFlags & VK_QUEUE_COMPUTE_BIT) > 0;
@@ -26,11 +30,11 @@ namespace walrus {
 
 
   std::vector<DeviceInfo> DeviceInfo::getDeviceInfos(
-    VkInstance &instance,
-    std::vector<VkPhysicalDevice> *vkPhysicalDevices,
-    VkSurfaceKHR vkSurface,
-    DeviceTask deviceTask
-  ) {
+          VkInstance &instance,
+          std::vector<VkPhysicalDevice> *vkPhysicalDevices,
+          VkSurfaceKHR vkSurface,
+          DeviceTask deviceTask
+  ){
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
     if (deviceCount == 0) {
@@ -49,14 +53,22 @@ namespace walrus {
 
 
 
-  DeviceInfo::DeviceInfo(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR vkSurface, DeviceTask deviceTask) {
+  DeviceInfo::DeviceInfo(
+          VkPhysicalDevice &vkPhysicalDevice,
+          VkSurfaceKHR vkSurface,
+          DeviceTask deviceTask
+  ){
     init(vkPhysicalDevice, vkSurface, deviceTask);
   }
 
 
 
 
-  void DeviceInfo::init(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR vkSurface, DeviceTask deviceTask) {
+  void DeviceInfo::init(
+          VkPhysicalDevice &vkPhysicalDevice,
+          VkSurfaceKHR vkSurface,
+          DeviceTask deviceTask
+  ){
     task = deviceTask;
     getPhysicalDeviceProperties(vkPhysicalDevice);
     getQueueFamilyProperties(vkPhysicalDevice);
@@ -68,7 +80,9 @@ namespace walrus {
 
 
 
-  void DeviceInfo::clone(DeviceInfo const &deviceInfo) {
+  void DeviceInfo::clone(
+          DeviceInfo const &deviceInfo
+  ){
     queueData.clear();
     queueData = deviceInfo.queueData;
     properties = deviceInfo.properties;
@@ -84,7 +98,9 @@ namespace walrus {
 
 
 
-  void DeviceInfo::getPhysicalDeviceProperties(VkPhysicalDevice &vkPhysicalDevice) {
+  void DeviceInfo::getPhysicalDeviceProperties(
+          VkPhysicalDevice &vkPhysicalDevice
+  ){
     vkGetPhysicalDeviceProperties(vkPhysicalDevice, &properties);
     vkGetPhysicalDeviceFeatures(vkPhysicalDevice, &features);
   }
@@ -92,7 +108,9 @@ namespace walrus {
 
 
 
-  void DeviceInfo::getQueueFamilyProperties(VkPhysicalDevice &vkPhysicalDevice) {
+  void DeviceInfo::getQueueFamilyProperties(
+          VkPhysicalDevice &vkPhysicalDevice
+  ){
     uint32_t queueFamilyCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &queueFamilyCount, nullptr);
     _queueFamilies.clear();
@@ -106,11 +124,19 @@ namespace walrus {
 
 
 
-  void DeviceInfo::updateQueueSurfaceSupport(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR vkSurface) {
+  void DeviceInfo::updateQueueSurfaceSupport(
+          VkPhysicalDevice &vkPhysicalDevice,
+          VkSurfaceKHR vkSurface
+  ){
     for (unsigned int i = 0; i < queueData.size(); i++) {
       VkBool32 supportsSurface = 0;
       if (vkSurface != VK_NULL_HANDLE) {
-        vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice, i, vkSurface, &supportsSurface);
+        vkGetPhysicalDeviceSurfaceSupportKHR(
+          vkPhysicalDevice,
+          i,
+          vkSurface,
+          &supportsSurface
+        );
       }
       queueData.at(i).support.surface = supportsSurface;
     }
@@ -119,13 +145,19 @@ namespace walrus {
 
 
 
-  void DeviceInfo::updateDeviceSupportSummary(VkPhysicalDevice &vkPhysicalDevice, VkSurfaceKHR vkSurface) {
+  void DeviceInfo::updateDeviceSupportSummary(
+          VkPhysicalDevice &vkPhysicalDevice,
+          VkSurfaceKHR vkSurface
+  ){
     for (auto &queue: queueData) {
       if (queue.support.graphics) { supportSummary.graphics = true; }
       if (queue.support.compute) { supportSummary.compute = true; }
       if (queue.support.surface) { supportSummary.surface = true; }
     }
-    if (vkSurface != VK_NULL_HANDLE && Swapchain::querySwapchainSupport(vkPhysicalDevice, vkSurface).isValid()) {
+    if (
+      vkSurface != VK_NULL_HANDLE
+      && Swapchain::querySwapchainSupport(vkPhysicalDevice, vkSurface).isValid()
+    ){
       supportSummary.swapchain = true;
     }
   }
@@ -133,7 +165,8 @@ namespace walrus {
 
 
 
-  void DeviceInfo::selectMostSuitedQueue() {
+  void DeviceInfo::selectMostSuitedQueue()
+  {
     _bestQueueIndex = -1;
     uint32_t bestScore = 0;
     int i = 0;
@@ -142,11 +175,14 @@ namespace walrus {
       if (queue.support.graphics) { queue.score += 1; }
       if (queue.support.compute) { queue.score += 1; }
       if (queue.support.surface) { queue.score += 1; }
-      if ((task & GRAPHICS && (!queue.support.graphics || !queue.support.surface)) ||
-        (task & COMPUTE && !queue.support.compute) ||
-        (task == ALL && !queue.support.isComplete())) {
-        std::cerr << "queue not complete" << std::endl;
+      if ((task & GRAPHICS && (!queue.support.graphics || !queue.support.surface))
+        || (task & COMPUTE && !queue.support.compute)
+        || (task == ALL && !queue.support.isComplete())
+      ){
+        std::cerr << "queue " << i << " is not complete" << std::endl;
         queue.score = 0;
+      } else {
+        std::cout << "queue " << i << " is complete" << std::endl;
       }
       if (bestScore < queue.score) {
         bestScore = queue.score;
@@ -159,9 +195,16 @@ namespace walrus {
 
 
 
-  bool DeviceInfo::checkDeviceExtensionSupport(VkPhysicalDevice &vkPhysicalDevice) const {
+  bool DeviceInfo::checkDeviceExtensionSupport(
+          VkPhysicalDevice &vkPhysicalDevice
+  ) const {
     uint32_t extensionCount;
-    vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, nullptr, &extensionCount, nullptr);
+    vkEnumerateDeviceExtensionProperties(
+      vkPhysicalDevice,
+      nullptr,
+      &extensionCount,
+      nullptr
+    );
     std::vector<VkExtensionProperties> availableExtensions(extensionCount);
     vkEnumerateDeviceExtensionProperties(
       vkPhysicalDevice,
@@ -175,16 +218,27 @@ namespace walrus {
     }
     if (task & GRAPHICS) {
       if (!supportSummary.swapchain) {
+        std::cerr << "swapchain not supported -- task = " << task << std::endl;
         return false;
       }
     }
-    return requiredExtensions.empty();
+    const bool ret = requiredExtensions.empty();
+    if (!ret) {
+      std::cerr << "required extensions not supported -- task = " << task << std::endl;
+      std::cerr << "missing extensions: " << std::endl;
+      for (const auto &extension: requiredExtensions) {
+        std::cerr << "\t" << extension << std::endl;
+      }
+    }
+    return ret;
   }
 
 
 
 
-  void DeviceInfo::calculateDeviceScore(VkPhysicalDevice &vkPhysicalDevice) {
+  void DeviceInfo::calculateDeviceScore(
+          VkPhysicalDevice &vkPhysicalDevice
+  ){
     score = 0;
     if (!checkDeviceExtensionSupport(vkPhysicalDevice)) {
       std::cerr << "device extension not supported" << std::endl;
@@ -216,15 +270,22 @@ namespace walrus {
 
 
 
-  void DeviceInfo::createLogicalDevice(DeviceInfo &deviceInfo, VkPhysicalDevice &vkPhysicalDevice, VkDevice *device, std::vector<VkQueue> &queues) {
+  void DeviceInfo::createLogicalDevice(
+          DeviceInfo &deviceInfo,
+          VkPhysicalDevice &vkPhysicalDevice,
+          VkDevice *device,
+          std::vector<VkQueue> &queues
+  ){
     if (deviceInfo._bestQueueIndex == -1) {
       throw std::runtime_error(
-        "physical device does not have a suitable Queue. deviceName = " + std::string(deviceInfo.properties.deviceName)
+        "physical device does not have a suitable Queue. deviceName = "
+        + std::string(deviceInfo.properties.deviceName)
       );
     }
     if (!deviceInfo.checkDeviceExtensionSupport(vkPhysicalDevice)) {
       throw std::runtime_error(
-        "physical device does not support required extensions. deviceName: " + std::string(deviceInfo.properties.deviceName)
+        "physical device does not support required extensions. deviceName: "
+        + std::string(deviceInfo.properties.deviceName)
       );
     }
 
@@ -250,6 +311,7 @@ namespace walrus {
     createInfo.pEnabledFeatures = &deviceFeatures;
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
+
     // TODO: add allocator?
     if (vkCreateDevice(vkPhysicalDevice, &createInfo, nullptr, device) != VK_SUCCESS) {
       throw std::runtime_error("failed to create logical device!");
@@ -265,7 +327,8 @@ namespace walrus {
 
 
 
-  void DeviceInfo::print() {
+  void DeviceInfo::print()
+  {
     std::cout << io::to_color_string(io::LIGHT_GRAY, "device name:   ") << properties.deviceName << std::endl;
     std::cout << io::to_color_string(io::LIGHT_GRAY, "device score:  ") << score << std::endl;
     std::cout << io::to_color_string(io::LIGHT_GRAY, "declared task(s): ");
