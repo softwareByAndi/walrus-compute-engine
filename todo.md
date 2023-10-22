@@ -7,7 +7,8 @@ Note that this document is subject to drastic changes
 ### basic vulkan setup:
 
 finish basic vulkan setup from ( [vulkan-tutorial.com](https://vulkan-tutorial.com) )  
-- [x] presentation  
+- [x] presentation
+- [ ] device queue abstraction
 - [ ] graphics pipeline  
 - [ ] drawing  
 - [ ] dynamic swapchain recreation  
