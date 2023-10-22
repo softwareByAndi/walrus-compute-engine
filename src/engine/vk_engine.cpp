@@ -50,7 +50,8 @@ namespace walrus {
         init_renderpass();    /// render pass, destructor queue
         init_framebuffers();  /// framebuffers, destructor queue
         init_pipelines();     /// load shaders, pipeline-layout, pipelines, destroy shaders, destructor queue
-        load_meshes();        /// test triangle
+        /// FIXME : mesh loading doesn't work yet. the triangle is hard coded into the shader...
+//        load_meshes();        /// test triangle
       }
 
       /// initialization complete
@@ -294,20 +295,29 @@ namespace walrus {
 
   void VulkanEngine::init_swapchain() {
     assert((_task & DeviceTask::GRAPHICS) && "cannot initialize swapchain for non-graphics task");
+    /// TODO : add swapchain reset / recreation logic
+    assert(_swapchainImages.empty() && "swapchain re-creation not supported yet.");
 
     /// SWAPCHAIN
     {
+      /// query swapchain info
       _swapchainSupportDetails = Swapchain::querySwapchainSupport(_physicalDevice, _surface);
-      auto vkSurfaceFormat = Swapchain::chooseSurfaceFormat(_swapchainSupportDetails);
-      auto vkPresentMode = Swapchain::choosePresentationMode(_swapchainSupportDetails);
+      VkSurfaceFormatKHR vkSurfaceFormat = Swapchain::chooseSurfaceFormat(_swapchainSupportDetails);
+      VkPresentModeKHR vkPresentMode = Swapchain::choosePresentationMode(_swapchainSupportDetails);
       _swapchainExtent = Swapchain::chooseExtent(_swapchainSupportDetails, _window);
       _swapchainImageFormat = vkSurfaceFormat.format;
+
+      /// FIXME : this is creating 4 images on linux... only need 3 though, right?
+      /// FIXME : this value is passed to `createInfo.minImageCount`, so wy not just pass `capabilities.minImageCount` instead?
+      // set image counts to one more than the minimum to allow for triple? buffering
       uint32_t imageCount = _swapchainSupportDetails.capabilities.minImageCount + 1;
-      if (_swapchainSupportDetails.capabilities.maxImageCount > 0 &&
-        imageCount > _swapchainSupportDetails.capabilities.maxImageCount) {
+      if (_swapchainSupportDetails.capabilities.maxImageCount > 0
+          && imageCount > _swapchainSupportDetails.capabilities.maxImageCount
+      ){
         imageCount = _swapchainSupportDetails.capabilities.maxImageCount;
       }
 
+      /// set creation params
       VkSwapchainCreateInfoKHR createInfo{};
       createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
       createInfo.surface = _surface;
@@ -339,14 +349,18 @@ namespace walrus {
           - requires declaring in advance which queues will share ownership using `queueFamilyIndexCount` and `pQueueFamilyIndices`
         TODO: cover ownership chapters to implement exclusive logic instead of concurrent logic
       */
+
+      /// number of queues will determine concurrent v.s. exclusive
+      /// FIXME : this will need to be refactored when queue abstraction is implemented
       std::vector<uint32_t> queueIndices(_queues.size());
       for (uint32_t i = 0; i < _queues.size(); i++) {
         queueIndices[i] = i;
       }
       if (_queues.size() > 1) {
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        /// specify between which queue families image ownership will be shared. for now, image ownership will be shared across all queues.
-        createInfo.queueFamilyIndexCount = _queues.size();
+        /// specify between which queue families image ownership will be shared.
+        /// for now, image ownership will be shared across all queues.
+        createInfo.queueFamilyIndexCount = _queues.size(); /// FIXME : should this be queueIndices.size()?
         createInfo.pQueueFamilyIndices = queueIndices.data();
       } else {
         createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -354,15 +368,22 @@ namespace walrus {
         createInfo.pQueueFamilyIndices = nullptr;
       }
 
+      // create swapchain
       VK_CHECK(vkCreateSwapchainKHR(_device, &createInfo, nullptr, &_swapchain));
+
+      // get swapchain images
+      /**
+       * 1. call once to get the number of images
+       * 2. resize the vector to hold all images
+       * 3. call again to get the actual images
+       */
       vkGetSwapchainImagesKHR(
         _device,
         _swapchain,
-        &imageCount,
+        &imageCount, // overwriting a variable that's no longer needed
         nullptr
       );
       assert(imageCount > 0 && "no images?");
-      assert(_swapchainImages.empty() && "swapchain re-creation not supported yet.");
       _swapchainImages.resize(imageCount);
       vkGetSwapchainImagesKHR(
         _device,
@@ -390,8 +411,13 @@ namespace walrus {
         createInfo.subresourceRange.levelCount = 1;
         createInfo.subresourceRange.baseArrayLayer = 0;
         createInfo.subresourceRange.layerCount = 1;
-        VK_CHECK(vkCreateImageView(_device, &createInfo, nullptr, &_swapchainImageViews[i]));
-        /// destroyed with framebuffers
+        VK_CHECK(vkCreateImageView(
+                _device,
+                &createInfo,
+                nullptr,
+                &_swapchainImageViews[i]
+        ));
+        /// image views are destroyed with the framebuffers.
       }
     }
 
@@ -409,10 +435,13 @@ namespace walrus {
 
 
   void VulkanEngine::init_renderpass() {
-    assert(_swapchain != VK_NULL_HANDLE && "initialize swap chain before render pass");
+    /// TODO : implement reset / re-initialization
     assert(_renderPass == VK_NULL_HANDLE && "RenderPass re-initialization not supported yet");
+    assert(_swapchain != VK_NULL_HANDLE && "initialize swapchain before render pass");
 
     /// RENDER PASS
+    /// FIXME : why does this follow vulkan patterns but other engine code doesn't?
+    /// TODO : standardize engine patterns?
     auto renderPassCreateInfo = RenderPass::CreateInfo{};
     RenderPass::GetDefaultRenderPassCreateInfo(renderPassCreateInfo, _swapchainImageFormat);
     VK_CHECK(vkCreateRenderPass(_device, &renderPassCreateInfo.createInfo, nullptr, &_renderPass));
@@ -432,7 +461,7 @@ namespace walrus {
 
   void VulkanEngine::init_framebuffers() {
     assert(_renderPass != VK_NULL_HANDLE && "initialize render pass before frame buffers");
-    assert(_swapchain != VK_NULL_HANDLE && "if renderpass is defined, then this should be too");
+    assert(_swapchain != VK_NULL_HANDLE && "if renderpass is defined, then swapchain should be too");
     assert(!_swapchainImages.empty() && "can't create a frame buffer if no images...");
     assert(!_swapchainImageViews.empty() && "can't create a frame buffer if no image views...");
     assert(_framebuffers.empty() && "framebuffer re-initialization not supported yet");
@@ -451,15 +480,22 @@ namespace walrus {
     const uint32_t imageCount = _swapchainImages.size();
     _framebuffers.resize(imageCount);
     for (size_t i = 0; i < imageCount; i++) {
-      info.pAttachments = &_swapchainImageViews[i];
-      VK_CHECK(vkCreateFramebuffer(_device, &info, nullptr, &_framebuffers[i]));
+            info.pAttachments = &_swapchainImageViews[i];
+            VK_CHECK(vkCreateFramebuffer(
+                    _device,
+                    &info,
+                    nullptr,
+                    &_framebuffers[i]
+            ));
     }
 
     /// DESTROY
     _mainDestructionQueue.addDestructor([=]() {
+      // destroy framebuffers before image views
       for (auto &framebuffer: _framebuffers) {
         vkDestroyFramebuffer(_device, framebuffer, nullptr);
       }
+      // image views now safe to destroy
       for (auto &imageView: _swapchainImageViews) {
         vkDestroyImageView(_device, imageView, nullptr);
       }
@@ -528,13 +564,16 @@ namespace walrus {
 
 
 
+  /// @brief reads a shader file into a buffer and creates a shader module from it.
   bool VulkanEngine::load_shader_module(const char *filePath, VkShaderModule *outShaderModule) {
     std::ifstream file(filePath, std::ios::ate | std::ios::binary);
     if (!file.is_open()) {
       return false;
     }
 
+    // gets file size, because std::ios::ate sets the position to the end of the file
     size_t fileSize = (size_t) file.tellg();
+    /// TODO : is a vector the optimal container for buffer?
     std::vector<uint32_t> buffer(fileSize / sizeof(uint32_t));
     file.seekg(0);
     file.read((char *) buffer.data(), (long) fileSize);
@@ -565,18 +604,19 @@ namespace walrus {
 
 
   void VulkanEngine::init_pipelines() {
-    assert(_swapchain != VK_NULL_HANDLE && "initialize swapchain before pipelines");
+    assert(_swapchain != VK_NULL_HANDLE && "must initialize swapchain before pipelines");
 
     /// CONSTANTS
     VkPipelineLayoutCreateInfo info = defaults::pipeline::layoutCreateInfo();
-    PipelineBuilder builder{_swapchainExtent};
+    PipelineBuilder builder{this->_swapchainExtent};
+    /// FIXME : topology and polygon mode is hard coded
     builder.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     builder.rasterizerState.polygonMode = VK_POLYGON_MODE_FILL;
 
     for (auto &shaderPath: _shaders.filePaths) {
       /// LOAD SHADERS
-      VkShaderModule fragmentShader;
-      VkShaderModule vertexShader;
+      VkShaderModule fragmentShader; // will be instantiated in `load_shader_module` call
+      VkShaderModule vertexShader;   // will be instantiated in `load_shader_module` call
       {
         std::string fragFilePath = shaderPath + ".frag.spv";
         std::string vertFilePath = shaderPath + ".vert.spv";
@@ -594,12 +634,20 @@ namespace walrus {
       {
         // TODO: add descriptor sets and other stuff
         _pipelineLayouts.push_back(VK_NULL_HANDLE);
-        VK_CHECK(vkCreatePipelineLayout(_device, &info, nullptr, &_pipelineLayouts.back()));
+        VK_CHECK(vkCreatePipelineLayout(
+                _device,
+                &info,
+                nullptr,
+                &_pipelineLayouts.back()
+        ));
       }
 
       /// PIPELINE
       {
-        _pipelines.push_back(VK_NULL_HANDLE);
+        /// FIXME : pipeline defaults are in a defaults namespace, but renderpass isn't
+        /// FIXME : some classes have default creator functions and some don't...
+        /// FIXME : standardize how default createInfo structs are created.
+
         builder.shaderStages.clear();
         builder.shaderStages.push_back(
           defaults::pipeline::shaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader)
@@ -608,7 +656,13 @@ namespace walrus {
           defaults::pipeline::shaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, vertexShader)
         );
         builder.pipelineLayout = _pipelineLayouts.back();
-        builder.build(_device, _renderPass, &_pipelines.back());
+
+        _pipelines.push_back(VK_NULL_HANDLE);
+        builder.build(
+                _device,
+                _renderPass,
+                &_pipelines.back()
+        );
       }
       vkDestroyShaderModule(_device, fragmentShader, nullptr);
       vkDestroyShaderModule(_device, vertexShader, nullptr);
@@ -616,9 +670,11 @@ namespace walrus {
 
     /// DESTROY
     _mainDestructionQueue.addDestructor([=]() {
+      // must destroy pipelines before pipeline layouts
       for (auto &pipeline: _pipelines) {
         vkDestroyPipeline(_device, pipeline, nullptr);
       }
+      // pipeline layouts are now safe to destroy
       for (auto &layout: _pipelineLayouts) {
         vkDestroyPipelineLayout(_device, layout, nullptr);
       }
@@ -634,7 +690,7 @@ namespace walrus {
     _test.mesh.vertices[0].position = {1.f, 1.f, 0.f};
     _test.mesh.vertices[1].position = {-1.f, 1.f, 0.f};
     _test.mesh.vertices[2].position = {0.f, -1.f, 0.f};
-    _test.mesh.vertices[0].color = {0.f, 1.f, 0.f};
+    _test.mesh.vertices[0].color = {0.f, 1.f, 1.f};
     _test.mesh.vertices[1].color = {0.f, 1.f, 0.f};
     _test.mesh.vertices[2].color = {0.f, 1.f, 0.f};
     // TODO: add normals
@@ -645,40 +701,58 @@ namespace walrus {
 
 
   void VulkanEngine::upload_mesh(Mesh &mesh) {
-    VkBufferCreateInfo bufferInfo{};
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = mesh.vertices.size() * sizeof(walrus::Vertex);
-    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    /// VMA BUFFER
+    {
+      VkBufferCreateInfo bufferInfo{};
+      bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+      bufferInfo.size = mesh.vertices.size() * sizeof(walrus::Vertex);
+      bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 
-    VmaAllocationCreateInfo vmaAllocInfo{};
-    vmaAllocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+      VmaAllocationCreateInfo vmaAllocInfo{};
+      vmaAllocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-    VK_CHECK(vmaCreateBuffer(
-      _allocator,
-      &bufferInfo,
-      &vmaAllocInfo,
-      &mesh.vertexBuffer.buffer,
-      &mesh.vertexBuffer.allocation,
-      nullptr
-    ));
+      VK_CHECK(vmaCreateBuffer(
+              _allocator,
+              &bufferInfo,
+              &vmaAllocInfo,
+              &mesh.vertexBuffer.buffer,
+              &mesh.vertexBuffer.allocation,
+              nullptr
+      ));
+    }
+
+    /// DESTROY
     _mainDestructionQueue.addDestructor([=]() {
-      vmaDestroyBuffer(_allocator, mesh.vertexBuffer.buffer, mesh.vertexBuffer.allocation);
+      vmaDestroyBuffer(
+              _allocator,
+              mesh.vertexBuffer.buffer,
+              mesh.vertexBuffer.allocation
+      );
     });
 
+
+    /// FIXME : what's the optimal way to do this? Will this be slow?
+    /// TODO : how often might this run? Is this a bottleneck?
+    /**
+     * transfering data from the cpu to the gpu has the following steps:
+     * 1. map the gpu memory to the cpu
+     * 2. copy the data to the mapped memory
+     * 3. unmap the gpu memory
+     */
     void *data;
     vmaMapMemory(
-      _allocator,
-      mesh.vertexBuffer.allocation,
-      &data
+        _allocator,
+        mesh.vertexBuffer.allocation,
+        &data
     );
     memcpy(
-      data,
-      mesh.vertices.data(),
-      mesh.vertices.size() * sizeof(walrus::Vertex)
+        data,
+        mesh.vertices.data(),
+        mesh.vertices.size() * sizeof(walrus::Vertex)
     );
     vmaUnmapMemory(
-      _allocator,
-      mesh.vertexBuffer.allocation
+        _allocator,
+        mesh.vertexBuffer.allocation
     );
   }
 
@@ -698,20 +772,24 @@ namespace walrus {
   void VulkanEngine::draw() {
     uint32_t imageIndex;
     VK_CHECK(vkWaitForFences(
-      _device,
-      1,
-      _fences.pRender,
-      true,
-      1'000'000'000
+            _device,
+            1,
+            _fences.pRender,
+            true,
+            1'000'000'000
     ));
-    VK_CHECK(vkResetFences(_device, 1, _fences.pRender));
+    VK_CHECK(vkResetFences(
+            _device,
+            1,
+            _fences.pRender
+    ));
     VK_CHECK(vkAcquireNextImageKHR(
-      _device,
-      _swapchain,
-      1'000'000'000,
-      *_semaphores.pPresent,
-      nullptr,
-      &imageIndex
+            _device,
+            _swapchain,
+            1'000'000'000,
+            *_semaphores.pPresent,
+            nullptr,
+            &imageIndex
     ));
 
     auto graphicsQueue = _queues.front();
@@ -763,7 +841,7 @@ namespace walrus {
       );
       vkCmdDraw(
         _commandBuffer,
-        3,
+        3, /// FIXME : this should be the number of vertices in the mesh
         1,
         0,
         0
