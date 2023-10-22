@@ -10,6 +10,17 @@
 #include <set>
 
 namespace walrus {
+  /**
+   * print * display
+   * queue family
+   * device info
+   */
+
+
+
+  /// -----------------------------------------------------------------------------------------------
+  /// PRINT & DISPLAY
+  /// -----------------------------------------------------------------------------------------------
 
   void printTaskFeatures(
         DeviceTask &task
@@ -18,38 +29,94 @@ namespace walrus {
     io::printExists(task & COMPUTE, "compute", false);
   }
 
+  void DeviceInfo::print()
+  {
+    std::cout << io::to_color_string(io::LIGHT_GRAY, "device name:   ") << properties.deviceName << std::endl;
+    std::cout << io::to_color_string(io::LIGHT_GRAY, "device score:  ") << score << std::endl;
+    std::cout << io::to_color_string(io::LIGHT_GRAY, "declared task(s): ");
+    printTaskFeatures(task);
+    std::cout << std::endl;
+    for (unsigned int i = 0; i < queueData.size(); i++) {
+      std::cout << io::COLORS[io::LIGHT_GRAY] << "queueFamily " << i << " : ";
+      io::printExists(queueData[i].support.graphics, "graphics", false);
+      io::printExists(queueData[i].support.compute, "compute", false);
+      io::printExists(queueData[i].support.surface, "surface", false);
+      std::cout << std::endl;
+    }
+    io::printExists(features.geometryShader, "geometryShader");
+    io::printExists(features.tessellationShader, "tessellationShader");
+    io::printExists(features.alphaToOne, "alphaToOne");
+    io::printExists(features.depthBiasClamp, "depthBiasClamp");
+    io::printExists(features.depthBounds, "depthBounds");
+    std::cout << io::to_color_string(io::Color::LIGHT_GRAY, "etc...") << std::endl;
+    std::cout << std::endl;
+  }
+
+
+
+
+
+  /// -----------------------------------------------------------------------------------------------
+  /// QUEUE FAMILY SUPPORT
+  /// -----------------------------------------------------------------------------------------------
+
+  /// @brief init struct and identify support for graphics & compute
+  /// surface and swapchain default to false
   DeviceInfo::QueueFamilyData::QueueFamilyData(
-        VkQueueFamilyProperties &vkProperties
+          VkQueueFamilyProperties &vkQueueFamilyProperties
   ){
-    support = Support{};
-    support.graphics = (vkProperties.queueFlags & VK_QUEUE_GRAPHICS_BIT) > 0;
-    support.compute = (vkProperties.queueFlags & VK_QUEUE_COMPUTE_BIT) > 0;
+    support.graphics = (vkQueueFamilyProperties.queueFlags & VK_QUEUE_GRAPHICS_BIT) > 0;
+    support.compute = (vkQueueFamilyProperties.queueFlags & VK_QUEUE_COMPUTE_BIT) > 0;
+  }
+
+
+
+  void DeviceInfo::updateQueueSurfaceSupport(
+          VkPhysicalDevice &vkPhysicalDevice,
+          VkSurfaceKHR vkSurface
+  ){
+    for (unsigned int i = 0; i < queueData.size(); i++) {
+      VkBool32 supportsSurface = 0;
+      if (vkSurface != VK_NULL_HANDLE) {
+        vkGetPhysicalDeviceSurfaceSupportKHR(
+                vkPhysicalDevice,
+                i,
+                vkSurface,
+                &supportsSurface
+        );
+      }
+      queueData.at(i).support.surface = supportsSurface;
+    }
   }
 
 
 
 
-  std::vector<DeviceInfo> DeviceInfo::getDeviceInfos(
-          VkInstance &instance,
-          std::vector<VkPhysicalDevice> *vkPhysicalDevices,
-          VkSurfaceKHR vkSurface,
-          DeviceTask deviceTask
+  void DeviceInfo::updateDeviceSupportSummary(
+          VkPhysicalDevice &vkPhysicalDevice,
+          VkSurfaceKHR vkSurface
   ){
-    uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-    if (deviceCount == 0) {
-      throw std::runtime_error("failed to find GPUs with Vulkan support");
+    for (auto &queue: queueData) {
+      if (queue.support.graphics) { supportSummary.graphics = true; }
+      if (queue.support.compute) { supportSummary.compute = true; }
+      if (queue.support.surface) { supportSummary.surface = true; }
     }
-    vkPhysicalDevices->clear();
-    vkPhysicalDevices->resize(deviceCount);
-    vkEnumeratePhysicalDevices(instance, &deviceCount, vkPhysicalDevices->data());
-    std::vector<DeviceInfo> devices;
-    for (auto &physicalDevice: *vkPhysicalDevices) {
-      devices.emplace_back(DeviceInfo{physicalDevice, vkSurface, deviceTask});
+    if (
+            vkSurface != VK_NULL_HANDLE
+            && Swapchain::querySwapchainSupport(vkPhysicalDevice, vkSurface).isValid()
+            ){
+      supportSummary.swapchain = true;
     }
-    return devices;
   }
 
+
+
+
+
+
+  /// -----------------------------------------------------------------------------------------------
+  /// DEVICE INFO CONSTRUCTORS
+  /// -----------------------------------------------------------------------------------------------
 
 
 
@@ -60,8 +127,6 @@ namespace walrus {
   ){
     init(vkPhysicalDevice, vkSurface, deviceTask);
   }
-
-
 
 
   void DeviceInfo::init(
@@ -76,8 +141,6 @@ namespace walrus {
     updateDeviceSupportSummary(vkPhysicalDevice, (task & GRAPHICS) ? vkSurface : VK_NULL_HANDLE);
     calculateDeviceScore(vkPhysicalDevice);
   }
-
-
 
 
   void DeviceInfo::clone(
@@ -98,6 +161,72 @@ namespace walrus {
 
 
 
+
+
+  /// -----------------------------------------------------------------------------------------------
+  /// DEVICE INFO STATIC FUNCTIONS
+  /// -----------------------------------------------------------------------------------------------
+
+
+
+  /// @brief list physical devices and get DeviceInfo from each
+  std::vector<DeviceInfo> DeviceInfo::getDeviceInfos(
+          VkInstance &instance,
+          std::vector<VkPhysicalDevice> *vkPhysicalDevices,
+          VkSurfaceKHR vkSurface,
+          DeviceTask deviceTask
+  ){
+    /**
+     * 1. call once to get the number of devices
+     * 2. resize the vector to hold all devices
+     * 3. call again to get the actual devices
+     */
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+    if (deviceCount == 0) {
+      throw std::runtime_error("failed to find GPUs with Vulkan support");
+    }
+    vkPhysicalDevices->clear();
+    vkPhysicalDevices->resize(deviceCount);
+    vkEnumeratePhysicalDevices(instance, &deviceCount, vkPhysicalDevices->data());
+
+    /// get DeviceInfo from each physical device
+    std::vector<DeviceInfo> devices;
+    for (auto &physicalDevice: *vkPhysicalDevices) {
+      devices.emplace_back(DeviceInfo{physicalDevice, vkSurface, deviceTask});
+    }
+    return devices;
+  }
+
+
+
+  std::vector<const char *> DeviceInfo::getExtensions(DeviceTask task) {
+    // FIXME : const char * memory leak?
+    std::vector<const char *> extensions = {};
+    #ifdef __APPLE__
+          extensions.push_back("VK_KHR_portability_subset"); // only macOS needs the portability subset
+    #elif defined(__linux__)
+          // pass
+    #else
+    #error "This code has only been built for macOS or Linux systems."
+    #endif
+    if (task & GRAPHICS) {
+      extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    }
+    return extensions;
+  }
+
+
+
+
+
+  /// -----------------------------------------------------------------------------------------------
+  /// DEVICE INFO INSTANCE FUNCTIONS
+  /// -----------------------------------------------------------------------------------------------
+
+
+
+  /// @brief get properties and features of the physical device
   void DeviceInfo::getPhysicalDeviceProperties(
           VkPhysicalDevice &vkPhysicalDevice
   ){
@@ -107,15 +236,22 @@ namespace walrus {
 
 
 
-
+  /// @brief list queue families and get QueueFamilyData from each
   void DeviceInfo::getQueueFamilyProperties(
           VkPhysicalDevice &vkPhysicalDevice
   ){
+    /**
+     * 1. call once to get the number of queue families
+     * 2. resize the vector to hold all queue families
+     * 3. call again to get the actual queue families
+     */
     uint32_t queueFamilyCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &queueFamilyCount, nullptr);
     _queueFamilies.clear();
     _queueFamilies.resize(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &queueFamilyCount, _queueFamilies.data());
+
+    /// get a DeviceInfo::QueueFamilyData from each queue family
     for (auto queueProperties: _queueFamilies) {
       queueData.emplace_back(DeviceInfo::QueueFamilyData{queueProperties});
     }
@@ -124,73 +260,6 @@ namespace walrus {
 
 
 
-  void DeviceInfo::updateQueueSurfaceSupport(
-          VkPhysicalDevice &vkPhysicalDevice,
-          VkSurfaceKHR vkSurface
-  ){
-    for (unsigned int i = 0; i < queueData.size(); i++) {
-      VkBool32 supportsSurface = 0;
-      if (vkSurface != VK_NULL_HANDLE) {
-        vkGetPhysicalDeviceSurfaceSupportKHR(
-          vkPhysicalDevice,
-          i,
-          vkSurface,
-          &supportsSurface
-        );
-      }
-      queueData.at(i).support.surface = supportsSurface;
-    }
-  }
-
-
-
-
-  void DeviceInfo::updateDeviceSupportSummary(
-          VkPhysicalDevice &vkPhysicalDevice,
-          VkSurfaceKHR vkSurface
-  ){
-    for (auto &queue: queueData) {
-      if (queue.support.graphics) { supportSummary.graphics = true; }
-      if (queue.support.compute) { supportSummary.compute = true; }
-      if (queue.support.surface) { supportSummary.surface = true; }
-    }
-    if (
-      vkSurface != VK_NULL_HANDLE
-      && Swapchain::querySwapchainSupport(vkPhysicalDevice, vkSurface).isValid()
-    ){
-      supportSummary.swapchain = true;
-    }
-  }
-
-
-
-
-  void DeviceInfo::selectMostSuitedQueue()
-  {
-    _bestQueueIndex = -1;
-    uint32_t bestScore = 0;
-    int i = 0;
-    for (auto &queue: queueData) {
-      queue.score = 0;
-      if (queue.support.graphics) { queue.score += 1; }
-      if (queue.support.compute) { queue.score += 1; }
-      if (queue.support.surface) { queue.score += 1; }
-      if ((task & GRAPHICS && (!queue.support.graphics || !queue.support.surface))
-        || (task & COMPUTE && !queue.support.compute)
-        || (task == ALL && !queue.support.isComplete())
-      ){
-        std::cerr << "queue " << i << " is not complete" << std::endl;
-        queue.score = 0;
-      } else {
-        std::cout << "queue " << i << " is complete" << std::endl;
-      }
-      if (bestScore < queue.score) {
-        bestScore = queue.score;
-        _bestQueueIndex = i;
-      }
-      i++;
-    }
-  }
 
 
 
@@ -270,6 +339,36 @@ namespace walrus {
 
 
 
+    void DeviceInfo::selectMostSuitedQueue()
+    {
+      _bestQueueIndex = -1;
+      uint32_t bestScore = 0;
+      int i = 0;
+      for (auto &queue: queueData) {
+        queue.score = 0;
+        if (queue.support.graphics) { queue.score += 1; }
+        if (queue.support.compute) { queue.score += 1; }
+        if (queue.support.surface) { queue.score += 1; }
+        if ((task & GRAPHICS && (!queue.support.graphics || !queue.support.surface))
+            || (task & COMPUTE && !queue.support.compute)
+            || (task == ALL && !queue.support.isComplete())
+        ){
+          std::cerr << "queue " << i << " is not complete" << std::endl;
+          queue.score = 0;
+        } else {
+          std::cout << "queue " << i << " is complete" << std::endl;
+        }
+        if (bestScore < queue.score) {
+          bestScore = queue.score;
+          _bestQueueIndex = i;
+        }
+        i++;
+      }
+    }
+
+
+
+
   void DeviceInfo::createLogicalDevice(
           DeviceInfo &deviceInfo,
           VkPhysicalDevice &vkPhysicalDevice,
@@ -323,33 +422,6 @@ namespace walrus {
       }
     }
   }
-
-
-
-
-  void DeviceInfo::print()
-  {
-    std::cout << io::to_color_string(io::LIGHT_GRAY, "device name:   ") << properties.deviceName << std::endl;
-    std::cout << io::to_color_string(io::LIGHT_GRAY, "device score:  ") << score << std::endl;
-    std::cout << io::to_color_string(io::LIGHT_GRAY, "declared task(s): ");
-    printTaskFeatures(task);
-    std::cout << std::endl;
-    for (unsigned int i = 0; i < queueData.size(); i++) {
-      std::cout << io::COLORS[io::LIGHT_GRAY] << "queueFamily " << i << " : ";
-      io::printExists(queueData[i].support.graphics, "graphics", false);
-      io::printExists(queueData[i].support.compute, "compute", false);
-      io::printExists(queueData[i].support.surface, "surface", false);
-      std::cout << std::endl;
-    }
-    io::printExists(features.geometryShader, "geometryShader");
-    io::printExists(features.tessellationShader, "tessellationShader");
-    io::printExists(features.alphaToOne, "alphaToOne");
-    io::printExists(features.depthBiasClamp, "depthBiasClamp");
-    io::printExists(features.depthBounds, "depthBounds");
-    std::cout << io::to_color_string(io::Color::LIGHT_GRAY, "etc...") << std::endl;
-    std::cout << std::endl;
-  }
-
 
 
 } // namespace walrus
