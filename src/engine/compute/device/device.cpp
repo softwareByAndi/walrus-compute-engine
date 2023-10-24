@@ -37,10 +37,15 @@ namespace walrus {
     printTaskFeatures(task);
     std::cout << std::endl;
     for (unsigned int i = 0; i < queueData.size(); i++) {
-      std::cout << io::COLORS[io::LIGHT_GRAY] << "queueFamily " << i << " : ";
+      unsigned int queueCount = queueData[i].queueCount;
+      std::string s = queueCount > 1 ? "s" : "";
+      io::Color color = _bestQueueIndex == i ? io::Color::LIGHT_BLUE : io::Color::LIGHT_GRAY;
+
+      std::cout << io::to_color_string(color, "queueFamily " + std::to_string(i) + ": ");
       io::printExists(queueData[i].support.graphics, "graphics", false);
       io::printExists(queueData[i].support.compute, "compute", false);
       io::printExists(queueData[i].support.surface, "surface", false);
+      std::cout << io::to_color_string(io::LIGHT_GRAY, " (" + std::to_string(queueCount) + " queue" + s + ")");
       std::cout << std::endl;
     }
     io::printExists(features.geometryShader, "geometryShader");
