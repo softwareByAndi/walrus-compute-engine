@@ -120,10 +120,9 @@ namespace walrus {
       if (queue.support.compute) { supportSummary.compute = true; }
       if (queue.support.surface) { supportSummary.surface = true; }
     }
-    if (
-            vkSurface != VK_NULL_HANDLE
-            && Swapchain::querySwapchainSupport(vkPhysicalDevice, vkSurface).isValid()
-            ){
+    if (vkSurface != VK_NULL_HANDLE
+        && Swapchain::querySwapchainSupport(vkPhysicalDevice, vkSurface).isValid()
+    ){
       supportSummary.swapchain = true;
     }
   }
@@ -223,11 +222,11 @@ namespace walrus {
     // FIXME : const char * memory leak?
     std::vector<const char *> extensions = {};
     #ifdef __APPLE__
-          extensions.push_back("VK_KHR_portability_subset"); // only macOS needs the portability subset
+            extensions.push_back("VK_KHR_portability_subset"); // only macOS needs the portability subset
     #elif defined(__linux__)
-          // pass
+            // pass
     #else
-    #error "This code has only been built for macOS or Linux systems."
+            #error "This code has only been built for macOS or Linux systems."
     #endif
     if (task & GRAPHICS) {
       extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
