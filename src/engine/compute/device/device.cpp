@@ -22,6 +22,15 @@ namespace walrus {
   /// PRINT & DISPLAY
   /// -----------------------------------------------------------------------------------------------
 
+  /// FIXME : pull these values dynamically... see VkPhysicalDeviceType enum
+  std::vector<std::string> DeviceTypeStrings = {
+    "VK_PHYSICAL_DEVICE_TYPE_OTHER",
+    "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU",
+    "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU",
+    "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU",
+    "VK_PHYSICAL_DEVICE_TYPE_CPU"
+  };
+
   void printTaskFeatures(
         DeviceTask &task
   ){
@@ -31,8 +40,9 @@ namespace walrus {
 
   void DeviceInfo::print()
   {
-    std::cout << io::to_color_string(io::LIGHT_GRAY, "device name:   ") << properties.deviceName << std::endl;
-    std::cout << io::to_color_string(io::LIGHT_GRAY, "device score:  ") << score << std::endl;
+    std::cout << io::to_color_string(io::LIGHT_GRAY, "device name:      ") << properties.deviceName << std::endl;
+    std::cout << io::to_color_string(io::LIGHT_GRAY, "deviceType:       ") << DeviceTypeStrings[properties.deviceType] << std::endl;
+    std::cout << io::to_color_string(io::LIGHT_GRAY, "device score:     ") << score << std::endl;
     std::cout << io::to_color_string(io::LIGHT_GRAY, "declared task(s): ");
     printTaskFeatures(task);
     std::cout << std::endl;
