@@ -265,9 +265,12 @@ namespace walrus {
       assert( !(_task & DeviceTask::GRAPHICS)
               || _deviceInfo.queueData[queueFamilyIndex].support.isComplete()
               && "current logic only supports queues with complete support...");
+
+      // TODO: add option to disable transient bit
       auto createInfo = CommandPool::createInfo(
         queueFamilyIndex,
         VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
+        | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT // optimizes memory allocation for temporary/single-use command buffers
       );
       VK_CHECK(vkCreateCommandPool(
         _device,
