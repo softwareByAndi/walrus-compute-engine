@@ -108,7 +108,7 @@ namespace walrus {
     sync::generics::RenderSync<VkSemaphore> _semaphores{};
     sync::generics::RenderSync<VkFence> _fences{};
 
-    /// Memory
+    /// MEMORY
     VmaAllocator _allocator = nullptr;
 
     /// RENDERING
