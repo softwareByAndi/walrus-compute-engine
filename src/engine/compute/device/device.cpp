@@ -404,8 +404,9 @@ namespace walrus {
       queueCreateInfos.push_back(queueCreateInfo);
     }
 
+    // if samplerAnisotropy is supported, enable it
     VkPhysicalDeviceFeatures deviceFeatures{};
-    deviceFeatures.samplerAnisotropy = VK_TRUE;
+    deviceFeatures.samplerAnisotropy = deviceInfo.features.samplerAnisotropy;
     const auto extensions = DeviceInfo::getExtensions(deviceInfo.task);
 
     VkDeviceCreateInfo createInfo{};
