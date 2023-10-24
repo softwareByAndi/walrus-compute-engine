@@ -48,6 +48,7 @@ namespace walrus {
       std::cout << io::to_color_string(io::LIGHT_GRAY, " (" + std::to_string(queueCount) + " queue" + s + ")");
       std::cout << std::endl;
     }
+    io::printExists(features.samplerAnisotropy, "samplerAnisotropy");
     io::printExists(features.geometryShader, "geometryShader");
     io::printExists(features.tessellationShader, "tessellationShader");
     io::printExists(features.alphaToOne, "alphaToOne");
