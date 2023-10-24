@@ -433,6 +433,12 @@ namespace walrus {
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
 
+    /// PRINT SELECTED DEVICE INFO
+    std::cout << std::endl;
+    std::cout << io::to_color_string(io::Color::CYAN, "creating logical device") << std::endl;
+    deviceInfo.print();
+    std::cout << std::endl;
+
     // TODO: add allocator?
     if (vkCreateDevice(vkPhysicalDevice, &createInfo, nullptr, device) != VK_SUCCESS) {
       throw std::runtime_error("failed to create logical device!");
