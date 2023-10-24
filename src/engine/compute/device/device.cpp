@@ -63,10 +63,13 @@ namespace walrus {
   /// @brief init struct and identify support for graphics & compute
   /// surface and swapchain default to false
   DeviceInfo::QueueFamilyData::QueueFamilyData(
-          VkQueueFamilyProperties &vkQueueFamilyProperties
+          VkQueueFamilyProperties &vkQueueFamilyProperties,
+          int queueFamilyIndex
   ){
     support.graphics = (vkQueueFamilyProperties.queueFlags & VK_QUEUE_GRAPHICS_BIT) > 0;
     support.compute = (vkQueueFamilyProperties.queueFlags & VK_QUEUE_COMPUTE_BIT) > 0;
+    this->queueFamilyIndex = queueFamilyIndex;
+    this->queueCount = vkQueueFamilyProperties.queueCount;
   }
 
 
@@ -252,8 +255,8 @@ namespace walrus {
     vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &queueFamilyCount, _queueFamilies.data());
 
     /// get a DeviceInfo::QueueFamilyData from each queue family
-    for (auto queueProperties: _queueFamilies) {
-      queueData.emplace_back(DeviceInfo::QueueFamilyData{queueProperties});
+    for (int i = 0; i < _queueFamilies.size(); i++) {
+      queueData.emplace_back(DeviceInfo::QueueFamilyData{_queueFamilies[i], i});
     }
   }
 
@@ -339,6 +342,8 @@ namespace walrus {
 
 
 
+    /// FIXME : most suitable for what...?
+    /// TODO : pass in task as an argument
     void DeviceInfo::selectMostSuitedQueue()
     {
       _bestQueueIndex = -1;
@@ -390,11 +395,11 @@ namespace walrus {
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos{};
     float queuePriority = 1.0f;
-    for (uint32_t i = 0; i < deviceInfo.queueData.size(); i++) {
+    for (QueueFamilyData queueFamilyData : deviceInfo.queueData) {
       VkDeviceQueueCreateInfo queueCreateInfo = {};
       queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-      queueCreateInfo.queueFamilyIndex = i;
-      queueCreateInfo.queueCount = 1;
+      queueCreateInfo.queueFamilyIndex = queueFamilyData.queueFamilyIndex;
+      queueCreateInfo.queueCount = queueFamilyData.queueCount;
       queueCreateInfo.pQueuePriorities = &queuePriority;
       queueCreateInfos.push_back(queueCreateInfo);
     }

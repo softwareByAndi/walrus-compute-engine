@@ -85,9 +85,16 @@ namespace walrus {
     /// @brief a redundant wrapper for walrus::DeviceInfo::Support?
     struct QueueFamilyData {
         /// @brief initializes support var. and sets graphics and compute booleans
-        explicit QueueFamilyData(VkQueueFamilyProperties &vkQueueFamilyProperties);
+        explicit QueueFamilyData(
+                VkQueueFamilyProperties &vkQueueFamilyProperties,
+                int queueFamilyIndex
+        );
         /// @brief a variable to reference what a given queue supports
         Support support{};
+        /// @brief used to index/reference other data structures
+        int queueFamilyIndex = -1;
+        /// @brief the number of queues in this family -- used when creating the logical device
+        unsigned int queueCount = 0;
         /// @brief a score variable to track how close this queue supports the users use-case
         uint32_t score = 0;
     };
