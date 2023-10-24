@@ -251,6 +251,9 @@ namespace walrus {
     /// COMMAND POOL
     {
       // FIXME : hard coded queue index? what's the point of all queue families supporting all features if we only use the one queue??
+      // TODO - QUEUE REFACTOR : pull this value from a queue manager
+      // TODO - QUEUE REFACTOR : add support for multiple command pools & queues (each queue family should have its own command pool)
+      // TODO : add logic -- should this be a graphics queue or a compute queue?
       const int queueFamilyIndex = 0;
       assert( _device != VK_NULL_HANDLE
               && "device not setup");
