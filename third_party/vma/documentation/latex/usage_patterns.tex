@@ -1,0 +1,64 @@
+See also slides from talk\+: \href{https://www.gdcvault.com/play/1025458/Advanced-Graphics-Techniques-Tutorial-New}{\texttt{ Sawicki, Adam. Advanced Graphics Techniques Tutorial\+: Memory management in Vulkan and DX12. Game Developers Conference, 2018}}\hypertarget{usage_patterns_usage_patterns_common_mistakes}{}\doxysection{Common mistakes}\label{usage_patterns_usage_patterns_common_mistakes}
+{\bfseries{Use of CPU\+\_\+\+TO\+\_\+\+GPU instead of CPU\+\_\+\+ONLY memory}}
+
+\#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+CPU\+\_\+\+TO\+\_\+\+GPU is recommended only for resources that will be mapped and written by the CPU, as well as read directly by the GPU -\/ like some buffers or textures updated every frame (dynamic). If you create a staging copy of a resource to be written by CPU and then used as a source of transfer to another resource placed in the GPU memory, that staging resource should be created with \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+CPU\+\_\+\+ONLY. Please read the descriptions of these enums carefully for details.
+
+{\bfseries{Unnecessary use of custom pools}}
+
+\mbox{\hyperlink{custom_memory_pools}{Custom memory pools}} may be useful for special purposes -\/ when you want to keep certain type of resources separate e.\+g. to reserve minimum amount of memory for them, limit maximum amount of memory they can occupy, or make some of them push out the other through the mechanism of \mbox{\hyperlink{lost_allocations}{Lost allocations}}. For most resources this is not needed and so it is not recommended to create \mbox{\hyperlink{structVmaPool}{Vma\+Pool}} objects and allocations out of them. Allocating from the default pool is sufficient.\hypertarget{usage_patterns_usage_patterns_simple}{}\doxysection{Simple patterns}\label{usage_patterns_usage_patterns_simple}
+\hypertarget{usage_patterns_usage_patterns_simple_render_targets}{}\doxysubsection{Render targets}\label{usage_patterns_usage_patterns_simple_render_targets}
+{\bfseries{When\+:}} Any resources that you frequently write and read on GPU, e.\+g. images used as color attachments (aka \char`\"{}render targets\char`\"{}), depth-\/stencil attachments, images/buffers used as storage image/buffer (aka \char`\"{}\+Unordered Access View (\+UAV)\char`\"{}).
+
+{\bfseries{What to do\+:}} Create them in video memory that is fastest to access from GPU using \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+GPU\+\_\+\+ONLY.
+
+Consider using \mbox{\hyperlink{vk_khr_dedicated_allocation}{VK\+\_\+\+KHR\+\_\+dedicated\+\_\+allocation}} extension and/or manually creating them as dedicated allocations using \#\+VMA\+\_\+\+ALLOCATION\+\_\+\+CREATE\+\_\+\+DEDICATED\+\_\+\+MEMORY\+\_\+\+BIT, especially if they are large or if you plan to destroy and recreate them e.\+g. when display resolution changes. Prefer to create such resources first and all other GPU resources (like textures and vertex buffers) later.\hypertarget{usage_patterns_usage_patterns_simple_immutable_resources}{}\doxysubsection{Immutable resources}\label{usage_patterns_usage_patterns_simple_immutable_resources}
+{\bfseries{When\+:}} Any resources that you fill on CPU only once (aka \char`\"{}immutable\char`\"{}) or infrequently and then read frequently on GPU, e.\+g. textures, vertex and index buffers, constant buffers that don\textquotesingle{}t change often.
+
+{\bfseries{What to do\+:}} Create them in video memory that is fastest to access from GPU using \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+GPU\+\_\+\+ONLY.
+
+To initialize content of such resource, create a CPU-\/side (aka \char`\"{}staging\char`\"{}) copy of it in system memory -\/ \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+CPU\+\_\+\+ONLY, map it, fill it, and submit a transfer from it to the GPU resource. You can keep the staging copy if you need it for another upload transfer in the future. If you don\textquotesingle{}t, you can destroy it or reuse this buffer for uploading different resource after the transfer finishes.
+
+Prefer to create just buffers in system memory rather than images, even for uploading textures. Use {\ttfamily vk\+Cmd\+Copy\+Buffer\+To\+Image()}. Dont use images with {\ttfamily VK\+\_\+\+IMAGE\+\_\+\+TILING\+\_\+\+LINEAR}.\hypertarget{usage_patterns_usage_patterns_dynamic_resources}{}\doxysubsection{Dynamic resources}\label{usage_patterns_usage_patterns_dynamic_resources}
+{\bfseries{When\+:}} Any resources that change frequently (aka \char`\"{}dynamic\char`\"{}), e.\+g. every frame or every draw call, written on CPU, read on GPU.
+
+{\bfseries{What to do\+:}} Create them using \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+CPU\+\_\+\+TO\+\_\+\+GPU. You can map it and write to it directly on CPU, as well as read from it on GPU.
+
+This is a more complex situation. Different solutions are possible, and the best one depends on specific GPU type, but you can use this simple approach for the start. Prefer to write to such resource sequentially (e.\+g. using {\ttfamily memcpy}). Don\textquotesingle{}t perform random access or any reads from it on CPU, as it may be very slow. Also note that textures written directly from the host through a mapped pointer need to be in LINEAR not OPTIMAL layout.\hypertarget{usage_patterns_usage_patterns_readback}{}\doxysubsection{Readback}\label{usage_patterns_usage_patterns_readback}
+{\bfseries{When\+:}} Resources that contain data written by GPU that you want to read back on CPU, e.\+g. results of some computations.
+
+{\bfseries{What to do\+:}} Create them using \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+GPU\+\_\+\+TO\+\_\+\+CPU. You can write to them directly on GPU, as well as map and read them on CPU.\hypertarget{usage_patterns_usage_patterns_advanced}{}\doxysection{Advanced patterns}\label{usage_patterns_usage_patterns_advanced}
+\hypertarget{usage_patterns_usage_patterns_integrated_graphics}{}\doxysubsection{Detecting integrated graphics}\label{usage_patterns_usage_patterns_integrated_graphics}
+You can support integrated graphics (like Intel HD Graphics, AMD APU) better by detecting it in Vulkan. To do it, call {\ttfamily vk\+Get\+Physical\+Device\+Properties()}, inspect {\ttfamily Vk\+Physical\+Device\+Properties\+::device\+Type} and look for {\ttfamily VK\+\_\+\+PHYSICAL\+\_\+\+DEVICE\+\_\+\+TYPE\+\_\+\+INTEGRATED\+\_\+\+GPU}. When you find it, you can assume that memory is unified and all memory types are comparably fast to access from GPU, regardless of {\ttfamily VK\+\_\+\+MEMORY\+\_\+\+PROPERTY\+\_\+\+DEVICE\+\_\+\+LOCAL\+\_\+\+BIT}.
+
+You can then sum up sizes of all available memory heaps and treat them as useful for your GPU resources, instead of only {\ttfamily DEVICE\+\_\+\+LOCAL} ones. You can also prefer to create your resources in memory types that are {\ttfamily HOST\+\_\+\+VISIBLE} to map them directly instead of submitting explicit transfer (see below).\hypertarget{usage_patterns_usage_patterns_direct_vs_transfer}{}\doxysubsection{Direct access versus transfer}\label{usage_patterns_usage_patterns_direct_vs_transfer}
+For resources that you frequently write on CPU and read on GPU, many solutions are possible\+:
+
+
+\begin{DoxyEnumerate}
+\item Create one copy in video memory using \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+GPU\+\_\+\+ONLY, second copy in system memory using \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+CPU\+\_\+\+ONLY and submit explicit transfer each time.
+\item Create just a single copy using \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+CPU\+\_\+\+TO\+\_\+\+GPU, map it and fill it on CPU, read it directly on GPU.
+\item Create just a single copy using \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+CPU\+\_\+\+ONLY, map it and fill it on CPU, read it directly on GPU.
+\end{DoxyEnumerate}
+
+Which solution is the most efficient depends on your resource and especially on the GPU. It is best to measure it and then make the decision. Some general recommendations\+:
+
+
+\begin{DoxyItemize}
+\item On integrated graphics use (2) or (3) to avoid unnecesary time and memory overhead related to using a second copy and making transfer.
+\item For small resources (e.\+g. constant buffers) use (2). Discrete AMD cards have special 256 MiB pool of video memory that is directly mappable. Even if the resource ends up in system memory, its data may be cached on GPU after first fetch over PCIe bus.
+\item For larger resources (e.\+g. textures), decide between (1) and (2). You may want to differentiate NVIDIA and AMD, e.\+g. by looking for memory type that is both {\ttfamily DEVICE\+\_\+\+LOCAL} and {\ttfamily HOST\+\_\+\+VISIBLE}. When you find it, use (2), otherwise use (1).
+\end{DoxyItemize}
+
+Similarly, for resources that you frequently write on GPU and read on CPU, multiple solutions are possible\+:
+
+
+\begin{DoxyEnumerate}
+\item Create one copy in video memory using \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+GPU\+\_\+\+ONLY, second copy in system memory using \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+GPU\+\_\+\+TO\+\_\+\+CPU and submit explicit tranfer each time.
+\item Create just single copy using \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+GPU\+\_\+\+TO\+\_\+\+CPU, write to it directly on GPU, map it and read it on CPU.
+\end{DoxyEnumerate}
+
+You should take some measurements to decide which option is faster in case of your specific resource.
+
+Note that textures accessed directly from the host through a mapped pointer need to be in LINEAR layout, which may slow down their usage on the device. Textures accessed only by the device and transfer operations can use OPTIMAL layout.
+
+If you don\textquotesingle{}t want to specialize your code for specific types of GPUs, you can still make an simple optimization for cases when your resource ends up in mappable memory to use it directly in this case instead of creating CPU-\/side staging copy. For details see \mbox{\hyperlink{memory_mapping_memory_mapping_finding_if_memory_mappable}{Finding out if memory is mappable}}. 

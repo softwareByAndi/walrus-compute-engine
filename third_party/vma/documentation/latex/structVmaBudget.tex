@@ -1,0 +1,70 @@
+\hypertarget{structVmaBudget}{}\doxysection{Vma\+Budget Struct Reference}
+\label{structVmaBudget}\index{VmaBudget@{VmaBudget}}
+
+
+Statistics of current memory usage and available budget, in bytes, for specific memory heap.  
+
+
+
+
+{\ttfamily \#include $<$vk\+\_\+mem\+\_\+alloc.\+h$>$}
+
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{structVmaBudget_a58b492901baab685f466199124e514a0}\label{structVmaBudget_a58b492901baab685f466199124e514a0}} 
+Vk\+Device\+Size \mbox{\hyperlink{structVmaBudget_a58b492901baab685f466199124e514a0}{block\+Bytes}}
+\begin{DoxyCompactList}\small\item\em Sum size of all {\ttfamily Vk\+Device\+Memory} blocks allocated from particular heap, in bytes. \end{DoxyCompactList}\item 
+Vk\+Device\+Size \mbox{\hyperlink{structVmaBudget_a7e2a6583ebd63e194951c542563804d8}{allocation\+Bytes}}
+\begin{DoxyCompactList}\small\item\em Sum size of all allocations created in particular heap, in bytes. \end{DoxyCompactList}\item 
+Vk\+Device\+Size \mbox{\hyperlink{structVmaBudget_a84dd1ecca8b0110259eb206dbadb11f6}{usage}}
+\begin{DoxyCompactList}\small\item\em Estimated current memory usage of the program, in bytes. \end{DoxyCompactList}\item 
+Vk\+Device\+Size \mbox{\hyperlink{structVmaBudget_ab82e1d1754c2d210d0bdf90220bc6cdd}{budget}}
+\begin{DoxyCompactList}\small\item\em Estimated amount of memory available to the program, in bytes. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Statistics of current memory usage and available budget, in bytes, for specific memory heap. 
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structVmaBudget_a7e2a6583ebd63e194951c542563804d8}\label{structVmaBudget_a7e2a6583ebd63e194951c542563804d8}} 
+\index{VmaBudget@{VmaBudget}!allocationBytes@{allocationBytes}}
+\index{allocationBytes@{allocationBytes}!VmaBudget@{VmaBudget}}
+\doxysubsubsection{\texorpdfstring{allocationBytes}{allocationBytes}}
+{\footnotesize\ttfamily Vk\+Device\+Size Vma\+Budget\+::allocation\+Bytes}
+
+
+
+Sum size of all allocations created in particular heap, in bytes. 
+
+Usually less or equal than {\ttfamily block\+Bytes}. Difference {\ttfamily block\+Bytes -\/ allocation\+Bytes} is the amount of memory allocated but unused -\/ available for new allocations or wasted due to fragmentation.
+
+It might be greater than {\ttfamily block\+Bytes} if there are some allocations in lost state, as they account to this value as well. \mbox{\Hypertarget{structVmaBudget_ab82e1d1754c2d210d0bdf90220bc6cdd}\label{structVmaBudget_ab82e1d1754c2d210d0bdf90220bc6cdd}} 
+\index{VmaBudget@{VmaBudget}!budget@{budget}}
+\index{budget@{budget}!VmaBudget@{VmaBudget}}
+\doxysubsubsection{\texorpdfstring{budget}{budget}}
+{\footnotesize\ttfamily Vk\+Device\+Size Vma\+Budget\+::budget}
+
+
+
+Estimated amount of memory available to the program, in bytes. 
+
+Fetched from system using {\ttfamily VK\+\_\+\+EXT\+\_\+memory\+\_\+budget} extension if enabled.
+
+It might be different (most probably smaller) than {\ttfamily Vk\+Memory\+Heap\+::size\mbox{[}heap\+Index\mbox{]}} due to factors external to the program, like other programs also consuming system resources. Difference {\ttfamily budget -\/ usage} is the amount of additional memory that can probably be allocated without problems. Exceeding the budget may result in various problems. \mbox{\Hypertarget{structVmaBudget_a84dd1ecca8b0110259eb206dbadb11f6}\label{structVmaBudget_a84dd1ecca8b0110259eb206dbadb11f6}} 
+\index{VmaBudget@{VmaBudget}!usage@{usage}}
+\index{usage@{usage}!VmaBudget@{VmaBudget}}
+\doxysubsubsection{\texorpdfstring{usage}{usage}}
+{\footnotesize\ttfamily Vk\+Device\+Size Vma\+Budget\+::usage}
+
+
+
+Estimated current memory usage of the program, in bytes. 
+
+Fetched from system using {\ttfamily VK\+\_\+\+EXT\+\_\+memory\+\_\+budget} extension if enabled.
+
+It might be different than {\ttfamily block\+Bytes} (usually higher) due to additional implicit objects also occupying the memory, like swapchain, pipelines, descriptor heaps, command buffers, or {\ttfamily Vk\+Device\+Memory} blocks allocated outside of this library, if any. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+vk\+\_\+mem\+\_\+alloc.\+h\end{DoxyCompactItemize}

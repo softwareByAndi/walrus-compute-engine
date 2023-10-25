@@ -1,0 +1,40 @@
+\hypertarget{structVmaRecordSettings}{}\doxysection{Vma\+Record\+Settings Struct Reference}
+\label{structVmaRecordSettings}\index{VmaRecordSettings@{VmaRecordSettings}}
+
+
+Parameters for recording calls to VMA functions. To be used in \mbox{\hyperlink{structVmaAllocatorCreateInfo_ad59c67d8e469176080556530b9c5b60b}{Vma\+Allocator\+Create\+Info\+::p\+Record\+Settings}}.  
+
+
+
+
+{\ttfamily \#include $<$vk\+\_\+mem\+\_\+alloc.\+h$>$}
+
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{structVmaRecordSettings_ad8fdcc92119ae7a8c08c1a564c01d63a}\label{structVmaRecordSettings_ad8fdcc92119ae7a8c08c1a564c01d63a}} 
+Vma\+Record\+Flags \mbox{\hyperlink{structVmaRecordSettings_ad8fdcc92119ae7a8c08c1a564c01d63a}{flags}}
+\begin{DoxyCompactList}\small\item\em Flags for recording. Use \#\+Vma\+Record\+Flag\+Bits enum. \end{DoxyCompactList}\item 
+const char $\ast$VMA\+\_\+\+NOT\+\_\+\+NULL \mbox{\hyperlink{structVmaRecordSettings_aa7461c877e9a181a5909e7c5797a9679}{p\+File\+Path}}
+\begin{DoxyCompactList}\small\item\em Path to the file that should be written by the recording. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Parameters for recording calls to VMA functions. To be used in \mbox{\hyperlink{structVmaAllocatorCreateInfo_ad59c67d8e469176080556530b9c5b60b}{Vma\+Allocator\+Create\+Info\+::p\+Record\+Settings}}. 
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structVmaRecordSettings_aa7461c877e9a181a5909e7c5797a9679}\label{structVmaRecordSettings_aa7461c877e9a181a5909e7c5797a9679}} 
+\index{VmaRecordSettings@{VmaRecordSettings}!pFilePath@{pFilePath}}
+\index{pFilePath@{pFilePath}!VmaRecordSettings@{VmaRecordSettings}}
+\doxysubsubsection{\texorpdfstring{pFilePath}{pFilePath}}
+{\footnotesize\ttfamily const char$\ast$ VMA\+\_\+\+NOT\+\_\+\+NULL Vma\+Record\+Settings\+::p\+File\+Path}
+
+
+
+Path to the file that should be written by the recording. 
+
+Suggested extension\+: \char`\"{}csv\char`\"{}. If the file already exists, it will be overwritten. It will be opened for the whole time \mbox{\hyperlink{structVmaAllocator}{Vma\+Allocator}} object is alive. If opening this file fails, creation of the whole allocator object fails. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+vk\+\_\+mem\+\_\+alloc.\+h\end{DoxyCompactItemize}

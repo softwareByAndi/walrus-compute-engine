@@ -1,0 +1,139 @@
+To \char`\"{}map memory\char`\"{} in Vulkan means to obtain a CPU pointer to {\ttfamily Vk\+Device\+Memory}, to be able to read from it or write to it in CPU code. Mapping is possible only of memory allocated from a memory type that has {\ttfamily VK\+\_\+\+MEMORY\+\_\+\+PROPERTY\+\_\+\+HOST\+\_\+\+VISIBLE\+\_\+\+BIT} flag. Functions {\ttfamily vk\+Map\+Memory()}, {\ttfamily vk\+Unmap\+Memory()} are designed for this purpose. You can use them directly with memory allocated by this library, but it is not recommended because of following issue\+: Mapping the same {\ttfamily Vk\+Device\+Memory} block multiple times is illegal -\/ only one mapping at a time is allowed. This includes mapping disjoint regions. Mapping is not reference-\/counted internally by Vulkan. Because of this, Vulkan Memory Allocator provides following facilities\+:\hypertarget{memory_mapping_memory_mapping_mapping_functions}{}\doxysection{Mapping functions}\label{memory_mapping_memory_mapping_mapping_functions}
+The library provides following functions for mapping of a specific \mbox{\hyperlink{structVmaAllocation}{Vma\+Allocation}}\+: vma\+Map\+Memory(), vma\+Unmap\+Memory(). They are safer and more convenient to use than standard Vulkan functions. You can map an allocation multiple times simultaneously -\/ mapping is reference-\/counted internally. You can also map different allocations simultaneously regardless of whether they use the same {\ttfamily Vk\+Device\+Memory} block. The way it\textquotesingle{}s implemented is that the library always maps entire memory block, not just region of the allocation. For further details, see description of vma\+Map\+Memory() function. Example\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{// Having these objects initialized:}
+\DoxyCodeLine{}
+\DoxyCodeLine{struct ConstantBuffer}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{...}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{ConstantBuffer constantBufferData;}
+\DoxyCodeLine{}
+\DoxyCodeLine{VmaAllocator allocator;}
+\DoxyCodeLine{VkBuffer constantBuffer;}
+\DoxyCodeLine{VmaAllocation constantBufferAllocation;}
+\DoxyCodeLine{}
+\DoxyCodeLine{// You can map and fill your buffer using following code:}
+\DoxyCodeLine{}
+\DoxyCodeLine{void* mappedData;}
+\DoxyCodeLine{vmaMapMemory(allocator, constantBufferAllocation, \&mappedData);}
+\DoxyCodeLine{memcpy(mappedData, \&constantBufferData, sizeof(constantBufferData));}
+\DoxyCodeLine{vmaUnmapMemory(allocator, constantBufferAllocation);}
+
+\end{DoxyCode}
+
+
+When mapping, you may see a warning from Vulkan validation layer similar to this one\+:
+
+{\itshape Mapping an image with layout VK\+\_\+\+IMAGE\+\_\+\+LAYOUT\+\_\+\+DEPTH\+\_\+\+STENCIL\+\_\+\+ATTACHMENT\+\_\+\+OPTIMAL can result in undefined behavior if this memory is used by the device. Only GENERAL or PREINITIALIZED should be used.}
+
+It happens because the library maps entire {\ttfamily Vk\+Device\+Memory} block, where different types of images and buffers may end up together, especially on GPUs with unified memory like Intel. You can safely ignore it if you are sure you access only memory of the intended object that you wanted to map.\hypertarget{memory_mapping_memory_mapping_persistently_mapped_memory}{}\doxysection{Persistently mapped memory}\label{memory_mapping_memory_mapping_persistently_mapped_memory}
+Kepping your memory persistently mapped is generally OK in Vulkan. You don\textquotesingle{}t need to unmap it before using its data on the GPU. The library provides a special feature designed for that\+: Allocations made with \#\+VMA\+\_\+\+ALLOCATION\+\_\+\+CREATE\+\_\+\+MAPPED\+\_\+\+BIT flag set in \mbox{\hyperlink{structVmaAllocationCreateInfo_add09658ac14fe290ace25470ddd6d41b}{Vma\+Allocation\+Create\+Info\+::flags}} stay mapped all the time, so you can just access CPU pointer to it any time without a need to call any \char`\"{}map\char`\"{} or \char`\"{}unmap\char`\"{} function. Example\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{VkBufferCreateInfo bufCreateInfo = \{ VK\_STRUCTURE\_TYPE\_BUFFER\_CREATE\_INFO \};}
+\DoxyCodeLine{bufCreateInfo.size = sizeof(ConstantBuffer);}
+\DoxyCodeLine{bufCreateInfo.usage = VK\_BUFFER\_USAGE\_TRANSFER\_SRC\_BIT;}
+\DoxyCodeLine{}
+\DoxyCodeLine{VmaAllocationCreateInfo allocCreateInfo = \{\};}
+\DoxyCodeLine{allocCreateInfo.usage = VMA\_MEMORY\_USAGE\_CPU\_ONLY;}
+\DoxyCodeLine{allocCreateInfo.flags = VMA\_ALLOCATION\_CREATE\_MAPPED\_BIT;}
+\DoxyCodeLine{}
+\DoxyCodeLine{VkBuffer buf;}
+\DoxyCodeLine{VmaAllocation alloc;}
+\DoxyCodeLine{VmaAllocationInfo allocInfo;}
+\DoxyCodeLine{vmaCreateBuffer(allocator, \&bufCreateInfo, \&allocCreateInfo, \&buf, \&alloc, \&allocInfo);}
+\DoxyCodeLine{}
+\DoxyCodeLine{// Buffer is already mapped. You can access its memory.}
+\DoxyCodeLine{memcpy(allocInfo.pMappedData, \&constantBufferData, sizeof(constantBufferData));}
+
+\end{DoxyCode}
+
+
+There are some exceptions though, when you should consider mapping memory only for a short period of time\+:
+
+
+\begin{DoxyItemize}
+\item When operating system is Windows 7 or 8.\+x (Windows 10 is not affected because it uses WDDM2), device is discrete AMD GPU, and memory type is the special 256 MiB pool of {\ttfamily DEVICE\+\_\+\+LOCAL + HOST\+\_\+\+VISIBLE} memory (selected when you use \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+CPU\+\_\+\+TO\+\_\+\+GPU), then whenever a memory block allocated from this memory type stays mapped for the time of any call to {\ttfamily vk\+Queue\+Submit()} or {\ttfamily vk\+Queue\+Present\+KHR()}, this block is migrated by WDDM to system RAM, which degrades performance. It doesn\textquotesingle{}t matter if that particular memory block is actually used by the command buffer being submitted.
+\item On Mac/\+Molten\+VK there is a known bug -\/ \href{https://github.com/KhronosGroup/MoltenVK/issues/175}{\texttt{ Issue \#175}} which requires unmapping before GPU can see updated texture.
+\item Keeping many large memory blocks mapped may impact performance or stability of some debugging tools.
+\end{DoxyItemize}\hypertarget{memory_mapping_memory_mapping_cache_control}{}\doxysection{Cache flush and invalidate}\label{memory_mapping_memory_mapping_cache_control}
+Memory in Vulkan doesn\textquotesingle{}t need to be unmapped before using it on GPU, but unless a memory types has {\ttfamily VK\+\_\+\+MEMORY\+\_\+\+PROPERTY\+\_\+\+HOST\+\_\+\+COHERENT\+\_\+\+BIT} flag set, you need to manually {\bfseries{invalidate}} cache before reading of mapped pointer and {\bfseries{flush}} cache after writing to mapped pointer. Map/unmap operations don\textquotesingle{}t do that automatically. Vulkan provides following functions for this purpose {\ttfamily vk\+Flush\+Mapped\+Memory\+Ranges()}, {\ttfamily vk\+Invalidate\+Mapped\+Memory\+Ranges()}, but this library provides more convenient functions that refer to given allocation object\+: vma\+Flush\+Allocation(), vma\+Invalidate\+Allocation(), or multiple objects at once\+: vma\+Flush\+Allocations(), vma\+Invalidate\+Allocations().
+
+Regions of memory specified for flush/invalidate must be aligned to {\ttfamily Vk\+Physical\+Device\+Limits\+::non\+Coherent\+Atom\+Size}. This is automatically ensured by the library. In any memory type that is {\ttfamily HOST\+\_\+\+VISIBLE} but not {\ttfamily HOST\+\_\+\+COHERENT}, all allocations within blocks are aligned to this value, so their offsets are always multiply of {\ttfamily non\+Coherent\+Atom\+Size} and two different allocations never share same \char`\"{}line\char`\"{} of this size.
+
+Please note that memory allocated with \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+CPU\+\_\+\+ONLY is guaranteed to be {\ttfamily HOST\+\_\+\+COHERENT}.
+
+Also, Windows drivers from all 3 {\bfseries{PC}} GPU vendors (AMD, Intel, NVIDIA) currently provide {\ttfamily HOST\+\_\+\+COHERENT} flag on all memory types that are {\ttfamily HOST\+\_\+\+VISIBLE}, so on this platform you may not need to bother.\hypertarget{memory_mapping_memory_mapping_finding_if_memory_mappable}{}\doxysection{Finding out if memory is mappable}\label{memory_mapping_memory_mapping_finding_if_memory_mappable}
+It may happen that your allocation ends up in memory that is {\ttfamily HOST\+\_\+\+VISIBLE} (available for mapping) despite it wasn\textquotesingle{}t explicitly requested. For example, application may work on integrated graphics with unified memory (like Intel) or allocation from video memory might have failed, so the library chose system memory as fallback.
+
+You can detect this case and map such allocation to access its memory on CPU directly, instead of launching a transfer operation. In order to do that\+: inspect {\ttfamily alloc\+Info.\+memory\+Type}, call vma\+Get\+Memory\+Type\+Properties(), and look for {\ttfamily VK\+\_\+\+MEMORY\+\_\+\+PROPERTY\+\_\+\+HOST\+\_\+\+VISIBLE\+\_\+\+BIT} flag in properties of that memory type.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{VkBufferCreateInfo bufCreateInfo = \{ VK\_STRUCTURE\_TYPE\_BUFFER\_CREATE\_INFO \};}
+\DoxyCodeLine{bufCreateInfo.size = sizeof(ConstantBuffer);}
+\DoxyCodeLine{bufCreateInfo.usage = VK\_BUFFER\_USAGE\_UNIFORM\_BUFFER\_BIT | VK\_BUFFER\_USAGE\_TRANSFER\_DST\_BIT;}
+\DoxyCodeLine{}
+\DoxyCodeLine{VmaAllocationCreateInfo allocCreateInfo = \{\};}
+\DoxyCodeLine{allocCreateInfo.usage = VMA\_MEMORY\_USAGE\_GPU\_ONLY;}
+\DoxyCodeLine{allocCreateInfo.preferredFlags = VK\_MEMORY\_PROPERTY\_HOST\_VISIBLE\_BIT;}
+\DoxyCodeLine{}
+\DoxyCodeLine{VkBuffer buf;}
+\DoxyCodeLine{VmaAllocation alloc;}
+\DoxyCodeLine{VmaAllocationInfo allocInfo;}
+\DoxyCodeLine{vmaCreateBuffer(allocator, \&bufCreateInfo, \&allocCreateInfo, \&buf, \&alloc, \&allocInfo);}
+\DoxyCodeLine{}
+\DoxyCodeLine{VkMemoryPropertyFlags memFlags;}
+\DoxyCodeLine{vmaGetMemoryTypeProperties(allocator, allocInfo.memoryType, \&memFlags);}
+\DoxyCodeLine{if((memFlags \& VK\_MEMORY\_PROPERTY\_HOST\_VISIBLE\_BIT) == 0)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{// Allocation ended up in mappable memory. You can map it and access it directly.}
+\DoxyCodeLine{void* mappedData;}
+\DoxyCodeLine{vmaMapMemory(allocator, alloc, \&mappedData);}
+\DoxyCodeLine{memcpy(mappedData, \&constantBufferData, sizeof(constantBufferData));}
+\DoxyCodeLine{vmaUnmapMemory(allocator, alloc);}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{else}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{// Allocation ended up in non-\/mappable memory.}
+\DoxyCodeLine{// You need to create CPU-\/side buffer in VMA\_MEMORY\_USAGE\_CPU\_ONLY and make a transfer.}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+You can even use \#\+VMA\+\_\+\+ALLOCATION\+\_\+\+CREATE\+\_\+\+MAPPED\+\_\+\+BIT flag while creating allocations that are not necessarily {\ttfamily HOST\+\_\+\+VISIBLE} (e.\+g. using \#\+VMA\+\_\+\+MEMORY\+\_\+\+USAGE\+\_\+\+GPU\+\_\+\+ONLY). If the allocation ends up in memory type that is {\ttfamily HOST\+\_\+\+VISIBLE}, it will be persistently mapped and you can use it directly. If not, the flag is just ignored. Example\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{VkBufferCreateInfo bufCreateInfo = \{ VK\_STRUCTURE\_TYPE\_BUFFER\_CREATE\_INFO \};}
+\DoxyCodeLine{bufCreateInfo.size = sizeof(ConstantBuffer);}
+\DoxyCodeLine{bufCreateInfo.usage = VK\_BUFFER\_USAGE\_UNIFORM\_BUFFER\_BIT | VK\_BUFFER\_USAGE\_TRANSFER\_DST\_BIT;}
+\DoxyCodeLine{}
+\DoxyCodeLine{VmaAllocationCreateInfo allocCreateInfo = \{\};}
+\DoxyCodeLine{allocCreateInfo.usage = VMA\_MEMORY\_USAGE\_GPU\_ONLY;}
+\DoxyCodeLine{allocCreateInfo.flags = VMA\_ALLOCATION\_CREATE\_MAPPED\_BIT;}
+\DoxyCodeLine{}
+\DoxyCodeLine{VkBuffer buf;}
+\DoxyCodeLine{VmaAllocation alloc;}
+\DoxyCodeLine{VmaAllocationInfo allocInfo;}
+\DoxyCodeLine{vmaCreateBuffer(allocator, \&bufCreateInfo, \&allocCreateInfo, \&buf, \&alloc, \&allocInfo);}
+\DoxyCodeLine{}
+\DoxyCodeLine{if(allocInfo.pUserData != nullptr)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{// Allocation ended up in mappable memory.}
+\DoxyCodeLine{// It's persistently mapped. You can access it directly.}
+\DoxyCodeLine{memcpy(allocInfo.pMappedData, \&constantBufferData, sizeof(constantBufferData));}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{else}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{// Allocation ended up in non-\/mappable memory.}
+\DoxyCodeLine{// You need to create CPU-\/side buffer in VMA\_MEMORY\_USAGE\_CPU\_ONLY and make a transfer.}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ 

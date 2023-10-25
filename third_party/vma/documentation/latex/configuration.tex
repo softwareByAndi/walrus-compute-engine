@@ -1,0 +1,28 @@
+Please check \char`\"{}\+CONFIGURATION SECTION\char`\"{} in the code to find macros that you can define before each include of this file or change directly in this file to provide your own implementation of basic facilities like assert, {\ttfamily min()} and {\ttfamily max()} functions, mutex, atomic etc. The library uses its own implementation of containers by default, but you can switch to using STL containers instead.
+
+For example, define {\ttfamily VMA\+\_\+\+ASSERT(expr)} before including the library to provide custom implementation of the assertion, compatible with your project. By default it is defined to standard C {\ttfamily assert(expr)} in {\ttfamily \+\_\+\+DEBUG} configuration and empty otherwise.\hypertarget{configuration_config_Vulkan_functions}{}\doxysection{Pointers to Vulkan functions}\label{configuration_config_Vulkan_functions}
+There are multiple ways to import pointers to Vulkan functions in the library. In the simplest case you don\textquotesingle{}t need to do anything. If the compilation or linking of your program or the initialization of the \mbox{\hyperlink{structVmaAllocator}{Vma\+Allocator}} doesn\textquotesingle{}t work for you, you can try to reconfigure it.
+
+First, the allocator tries to fetch pointers to Vulkan functions linked statically, like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{m\_VulkanFunctions.vkAllocateMemory = (PFN\_vkAllocateMemory)vkAllocateMemory;}
+
+\end{DoxyCode}
+
+
+If you want to disable this feature, set configuration macro\+: {\ttfamily \#define VMA\+\_\+\+STATIC\+\_\+\+VULKAN\+\_\+\+FUNCTIONS 0}.
+
+Second, you can provide the pointers yourself by setting member \mbox{\hyperlink{structVmaAllocatorCreateInfo_a5e45da0879451e58bee2f3a975f228f5}{Vma\+Allocator\+Create\+Info\+::p\+Vulkan\+Functions}}. You can fetch them e.\+g. using functions {\ttfamily vk\+Get\+Instance\+Proc\+Addr} and {\ttfamily vk\+Get\+Device\+Proc\+Addr} or by using a helper library like \href{https://github.com/zeux/volk}{\texttt{ volk}}.
+
+Third, VMA tries to fetch remaining pointers that are still null by calling {\ttfamily vk\+Get\+Instance\+Proc\+Addr} and {\ttfamily vk\+Get\+Device\+Proc\+Addr} on its own. If you want to disable this feature, set configuration macro\+: {\ttfamily \#define VMA\+\_\+\+DYNAMIC\+\_\+\+VULKAN\+\_\+\+FUNCTIONS 0}.
+
+Finally, all the function pointers required by the library (considering selected Vulkan version and enabled extensions) are checked with {\ttfamily VMA\+\_\+\+ASSERT} if they are not null.\hypertarget{configuration_custom_memory_allocator}{}\doxysection{Custom host memory allocator}\label{configuration_custom_memory_allocator}
+If you use custom allocator for CPU memory rather than default operator {\ttfamily new} and {\ttfamily delete} from C++, you can make this library using your allocator as well by filling optional member \mbox{\hyperlink{structVmaAllocatorCreateInfo_aa84222aa55c2b42c1eff64b16978c8c2}{Vma\+Allocator\+Create\+Info\+::p\+Allocation\+Callbacks}}. These functions will be passed to Vulkan, as well as used by the library itself to make any CPU-\/side allocations.\hypertarget{configuration_allocation_callbacks}{}\doxysection{Device memory allocation callbacks}\label{configuration_allocation_callbacks}
+The library makes calls to {\ttfamily vk\+Allocate\+Memory()} and {\ttfamily vk\+Free\+Memory()} internally. You can setup callbacks to be informed about these calls, e.\+g. for the purpose of gathering some statistics. To do it, fill optional member \mbox{\hyperlink{structVmaAllocatorCreateInfo_afbb24551124b16bdaa29f92eb96b8c56}{Vma\+Allocator\+Create\+Info\+::p\+Device\+Memory\+Callbacks}}.\hypertarget{configuration_heap_memory_limit}{}\doxysection{Device heap memory limit}\label{configuration_heap_memory_limit}
+When device memory of certain heap runs out of free space, new allocations may fail (returning error code) or they may succeed, silently pushing some existing memory blocks from GPU VRAM to system RAM (which degrades performance). This behavior is implementation-\/dependant -\/ it depends on GPU vendor and graphics driver.
+
+On AMD cards it can be controlled while creating Vulkan device object by using VK\+\_\+\+AMD\+\_\+memory\+\_\+overallocation\+\_\+behavior extension, if available.
+
+Alternatively, if you want to test how your program behaves with limited amount of Vulkan device memory available without switching your graphics card to one that really has smaller VRAM, you can use a feature of this library intended for this purpose. To do it, fill optional member Vma\+Allocator\+Create\+Info\+::p\+Heap\+Size\+Limit. 

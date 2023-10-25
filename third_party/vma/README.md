@@ -1,0 +1,1 @@
+to read [documentation here](./documentation/html/index.html) by opening the html file in your browser.

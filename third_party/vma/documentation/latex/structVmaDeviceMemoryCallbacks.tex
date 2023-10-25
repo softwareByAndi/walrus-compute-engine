@@ -1,0 +1,35 @@
+\hypertarget{structVmaDeviceMemoryCallbacks}{}\doxysection{Vma\+Device\+Memory\+Callbacks Struct Reference}
+\label{structVmaDeviceMemoryCallbacks}\index{VmaDeviceMemoryCallbacks@{VmaDeviceMemoryCallbacks}}
+
+
+Set of callbacks that the library will call for {\ttfamily vk\+Allocate\+Memory} and {\ttfamily vk\+Free\+Memory}.  
+
+
+
+
+{\ttfamily \#include $<$vk\+\_\+mem\+\_\+alloc.\+h$>$}
+
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{structVmaDeviceMemoryCallbacks_ac02066cbe29d1f2f97c68c8c462ee3d5}\label{structVmaDeviceMemoryCallbacks_ac02066cbe29d1f2f97c68c8c462ee3d5}} 
+PFN\+\_\+vma\+Allocate\+Device\+Memory\+Function VMA\+\_\+\+NULLABLE \mbox{\hyperlink{structVmaDeviceMemoryCallbacks_ac02066cbe29d1f2f97c68c8c462ee3d5}{pfn\+Allocate}}
+\begin{DoxyCompactList}\small\item\em Optional, can be null. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structVmaDeviceMemoryCallbacks_a74348a8b9bdb165535e010ed195bfdb9}\label{structVmaDeviceMemoryCallbacks_a74348a8b9bdb165535e010ed195bfdb9}} 
+PFN\+\_\+vma\+Free\+Device\+Memory\+Function VMA\+\_\+\+NULLABLE \mbox{\hyperlink{structVmaDeviceMemoryCallbacks_a74348a8b9bdb165535e010ed195bfdb9}{pfn\+Free}}
+\begin{DoxyCompactList}\small\item\em Optional, can be null. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structVmaDeviceMemoryCallbacks_a84102b94fa445b59a8b02b44e7dcb43f}\label{structVmaDeviceMemoryCallbacks_a84102b94fa445b59a8b02b44e7dcb43f}} 
+void $\ast$VMA\+\_\+\+NULLABLE \mbox{\hyperlink{structVmaDeviceMemoryCallbacks_a84102b94fa445b59a8b02b44e7dcb43f}{p\+User\+Data}}
+\begin{DoxyCompactList}\small\item\em Optional, can be null. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Set of callbacks that the library will call for {\ttfamily vk\+Allocate\+Memory} and {\ttfamily vk\+Free\+Memory}. 
+
+Provided for informative purpose, e.\+g. to gather statistics about number of allocations or total amount of memory allocated in Vulkan.
+
+Used in \mbox{\hyperlink{structVmaAllocatorCreateInfo_afbb24551124b16bdaa29f92eb96b8c56}{Vma\+Allocator\+Create\+Info\+::p\+Device\+Memory\+Callbacks}}. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+vk\+\_\+mem\+\_\+alloc.\+h\end{DoxyCompactItemize}

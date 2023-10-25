@@ -1,0 +1,144 @@
+\hypertarget{structVmaDefragmentationInfo2}{}\doxysection{Vma\+Defragmentation\+Info2 Struct Reference}
+\label{structVmaDefragmentationInfo2}\index{VmaDefragmentationInfo2@{VmaDefragmentationInfo2}}
+
+
+Parameters for defragmentation.  
+
+
+
+
+{\ttfamily \#include $<$vk\+\_\+mem\+\_\+alloc.\+h$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+const \mbox{\hyperlink{structVmaAllocation}{Vma\+Allocation}} VMA\+\_\+\+NOT\+\_\+\+NULL $\ast$VMA\+\_\+\+NULLABLE \mbox{\hyperlink{structVmaDefragmentationInfo2_af6c6394bbd66aed044bc1c5a48dd2589}{VMA\+\_\+\+LEN\+\_\+\+IF\+\_\+\+NOT\+\_\+\+NULL}} (\mbox{\hyperlink{structVmaDefragmentationInfo2_a3cf86ab32c1da779b4923d301a3056ba}{allocation\+Count}}) p\+Allocations
+\begin{DoxyCompactList}\small\item\em Pointer to array of allocations that can be defragmented. \end{DoxyCompactList}\item 
+Vk\+Bool32 $\ast$VMA\+\_\+\+NULLABLE \mbox{\hyperlink{structVmaDefragmentationInfo2_acd3b66fce601c3f042169f13b076544d}{VMA\+\_\+\+LEN\+\_\+\+IF\+\_\+\+NOT\+\_\+\+NULL}} (\mbox{\hyperlink{structVmaDefragmentationInfo2_a3cf86ab32c1da779b4923d301a3056ba}{allocation\+Count}}) p\+Allocations\+Changed
+\begin{DoxyCompactList}\small\item\em Optional, output. Pointer to array that will be filled with information whether the allocation at certain index has been changed during defragmentation. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structVmaPool}{Vma\+Pool}} VMA\+\_\+\+NOT\+\_\+\+NULL $\ast$VMA\+\_\+\+NULLABLE \mbox{\hyperlink{structVmaDefragmentationInfo2_a99260f5140b9f72129144022e1dfe795}{VMA\+\_\+\+LEN\+\_\+\+IF\+\_\+\+NOT\+\_\+\+NULL}} (\mbox{\hyperlink{structVmaDefragmentationInfo2_a7e70aa2a1081d849dcc7829b19d3ec9d}{pool\+Count}}) p\+Pools
+\begin{DoxyCompactList}\small\item\em Either null or pointer to array of pools to be defragmented. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{structVmaDefragmentationInfo2_a53e844ee5633e229cf6daf14b2d9fff9}\label{structVmaDefragmentationInfo2_a53e844ee5633e229cf6daf14b2d9fff9}} 
+Vma\+Defragmentation\+Flags \mbox{\hyperlink{structVmaDefragmentationInfo2_a53e844ee5633e229cf6daf14b2d9fff9}{flags}}
+\begin{DoxyCompactList}\small\item\em Reserved for future use. Should be 0. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structVmaDefragmentationInfo2_a3cf86ab32c1da779b4923d301a3056ba}\label{structVmaDefragmentationInfo2_a3cf86ab32c1da779b4923d301a3056ba}} 
+uint32\+\_\+t \mbox{\hyperlink{structVmaDefragmentationInfo2_a3cf86ab32c1da779b4923d301a3056ba}{allocation\+Count}}
+\begin{DoxyCompactList}\small\item\em Number of allocations in {\ttfamily p\+Allocations} array. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{structVmaDefragmentationInfo2_a7e70aa2a1081d849dcc7829b19d3ec9d}\label{structVmaDefragmentationInfo2_a7e70aa2a1081d849dcc7829b19d3ec9d}} 
+uint32\+\_\+t \mbox{\hyperlink{structVmaDefragmentationInfo2_a7e70aa2a1081d849dcc7829b19d3ec9d}{pool\+Count}}
+\begin{DoxyCompactList}\small\item\em Numer of pools in {\ttfamily p\+Pools} array. \end{DoxyCompactList}\item 
+Vk\+Device\+Size \mbox{\hyperlink{structVmaDefragmentationInfo2_af78e1ea40c22d85137b65f6b384a4d0a}{max\+Cpu\+Bytes\+To\+Move}}
+\begin{DoxyCompactList}\small\item\em Maximum total numbers of bytes that can be copied while moving allocations to different places using transfers on CPU side, like {\ttfamily memcpy()}, {\ttfamily memmove()}. \end{DoxyCompactList}\item 
+uint32\+\_\+t \mbox{\hyperlink{structVmaDefragmentationInfo2_a94c2c7223d52878445a8cccce396b671}{max\+Cpu\+Allocations\+To\+Move}}
+\begin{DoxyCompactList}\small\item\em Maximum number of allocations that can be moved to a different place using transfers on CPU side, like {\ttfamily memcpy()}, {\ttfamily memmove()}. \end{DoxyCompactList}\item 
+Vk\+Device\+Size \mbox{\hyperlink{structVmaDefragmentationInfo2_a4ddbc898d0afe1518f863a3763628f08}{max\+Gpu\+Bytes\+To\+Move}}
+\begin{DoxyCompactList}\small\item\em Maximum total numbers of bytes that can be copied while moving allocations to different places using transfers on GPU side, posted to {\ttfamily command\+Buffer}. \end{DoxyCompactList}\item 
+uint32\+\_\+t \mbox{\hyperlink{structVmaDefragmentationInfo2_a40d53d33e71ba0b66f844ed63c05a3f6}{max\+Gpu\+Allocations\+To\+Move}}
+\begin{DoxyCompactList}\small\item\em Maximum number of allocations that can be moved to a different place using transfers on GPU side, posted to {\ttfamily command\+Buffer}. \end{DoxyCompactList}\item 
+Vk\+Command\+Buffer VMA\+\_\+\+NULLABLE \mbox{\hyperlink{structVmaDefragmentationInfo2_aef85e2469af1744e2497990f26d35687}{command\+Buffer}}
+\begin{DoxyCompactList}\small\item\em Optional. Command buffer where GPU copy commands will be posted. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Parameters for defragmentation. 
+
+To be used with function vma\+Defragmentation\+Begin(). 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{structVmaDefragmentationInfo2_af6c6394bbd66aed044bc1c5a48dd2589}\label{structVmaDefragmentationInfo2_af6c6394bbd66aed044bc1c5a48dd2589}} 
+\index{VmaDefragmentationInfo2@{VmaDefragmentationInfo2}!VMA\_LEN\_IF\_NOT\_NULL@{VMA\_LEN\_IF\_NOT\_NULL}}
+\index{VMA\_LEN\_IF\_NOT\_NULL@{VMA\_LEN\_IF\_NOT\_NULL}!VmaDefragmentationInfo2@{VmaDefragmentationInfo2}}
+\doxysubsubsection{\texorpdfstring{VMA\_LEN\_IF\_NOT\_NULL()}{VMA\_LEN\_IF\_NOT\_NULL()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structVmaAllocation}{Vma\+Allocation}} VMA\+\_\+\+NOT\+\_\+\+NULL$\ast$ VMA\+\_\+\+NULLABLE Vma\+Defragmentation\+Info2\+::\+VMA\+\_\+\+LEN\+\_\+\+IF\+\_\+\+NOT\+\_\+\+NULL (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structVmaDefragmentationInfo2_a3cf86ab32c1da779b4923d301a3056ba}{allocation\+Count}}}]{ }\end{DoxyParamCaption})}
+
+
+
+Pointer to array of allocations that can be defragmented. 
+
+The array should have {\ttfamily allocation\+Count} elements. The array should not contain nulls. Elements in the array should be unique -\/ same allocation cannot occur twice. It is safe to pass allocations that are in the lost state -\/ they are ignored. All allocations not present in this array are considered non-\/moveable during this defragmentation. \mbox{\Hypertarget{structVmaDefragmentationInfo2_acd3b66fce601c3f042169f13b076544d}\label{structVmaDefragmentationInfo2_acd3b66fce601c3f042169f13b076544d}} 
+\index{VmaDefragmentationInfo2@{VmaDefragmentationInfo2}!VMA\_LEN\_IF\_NOT\_NULL@{VMA\_LEN\_IF\_NOT\_NULL}}
+\index{VMA\_LEN\_IF\_NOT\_NULL@{VMA\_LEN\_IF\_NOT\_NULL}!VmaDefragmentationInfo2@{VmaDefragmentationInfo2}}
+\doxysubsubsection{\texorpdfstring{VMA\_LEN\_IF\_NOT\_NULL()}{VMA\_LEN\_IF\_NOT\_NULL()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily Vk\+Bool32$\ast$ VMA\+\_\+\+NULLABLE Vma\+Defragmentation\+Info2\+::\+VMA\+\_\+\+LEN\+\_\+\+IF\+\_\+\+NOT\+\_\+\+NULL (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structVmaDefragmentationInfo2_a3cf86ab32c1da779b4923d301a3056ba}{allocation\+Count}}}]{ }\end{DoxyParamCaption})}
+
+
+
+Optional, output. Pointer to array that will be filled with information whether the allocation at certain index has been changed during defragmentation. 
+
+The array should have {\ttfamily allocation\+Count} elements. You can pass null if you are not interested in this information. \mbox{\Hypertarget{structVmaDefragmentationInfo2_a99260f5140b9f72129144022e1dfe795}\label{structVmaDefragmentationInfo2_a99260f5140b9f72129144022e1dfe795}} 
+\index{VmaDefragmentationInfo2@{VmaDefragmentationInfo2}!VMA\_LEN\_IF\_NOT\_NULL@{VMA\_LEN\_IF\_NOT\_NULL}}
+\index{VMA\_LEN\_IF\_NOT\_NULL@{VMA\_LEN\_IF\_NOT\_NULL}!VmaDefragmentationInfo2@{VmaDefragmentationInfo2}}
+\doxysubsubsection{\texorpdfstring{VMA\_LEN\_IF\_NOT\_NULL()}{VMA\_LEN\_IF\_NOT\_NULL()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structVmaPool}{Vma\+Pool}} VMA\+\_\+\+NOT\+\_\+\+NULL$\ast$ VMA\+\_\+\+NULLABLE Vma\+Defragmentation\+Info2\+::\+VMA\+\_\+\+LEN\+\_\+\+IF\+\_\+\+NOT\+\_\+\+NULL (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structVmaDefragmentationInfo2_a7e70aa2a1081d849dcc7829b19d3ec9d}{pool\+Count}}}]{ }\end{DoxyParamCaption})}
+
+
+
+Either null or pointer to array of pools to be defragmented. 
+
+All the allocations in the specified pools can be moved during defragmentation and there is no way to check if they were really moved as in {\ttfamily p\+Allocations\+Changed}, so you must query all the allocations in all these pools for new {\ttfamily Vk\+Device\+Memory} and offset using vma\+Get\+Allocation\+Info() if you might need to recreate buffers and images bound to them.
+
+The array should have {\ttfamily pool\+Count} elements. The array should not contain nulls. Elements in the array should be unique -\/ same pool cannot occur twice.
+
+Using this array is equivalent to specifying all allocations from the pools in {\ttfamily p\+Allocations}. It might be more efficient. 
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structVmaDefragmentationInfo2_aef85e2469af1744e2497990f26d35687}\label{structVmaDefragmentationInfo2_aef85e2469af1744e2497990f26d35687}} 
+\index{VmaDefragmentationInfo2@{VmaDefragmentationInfo2}!commandBuffer@{commandBuffer}}
+\index{commandBuffer@{commandBuffer}!VmaDefragmentationInfo2@{VmaDefragmentationInfo2}}
+\doxysubsubsection{\texorpdfstring{commandBuffer}{commandBuffer}}
+{\footnotesize\ttfamily Vk\+Command\+Buffer VMA\+\_\+\+NULLABLE Vma\+Defragmentation\+Info2\+::command\+Buffer}
+
+
+
+Optional. Command buffer where GPU copy commands will be posted. 
+
+If not null, it must be a valid command buffer handle that supports Transfer queue type. It must be in the recording state and outside of a render pass instance. You need to submit it and make sure it finished execution before calling vma\+Defragmentation\+End().
+
+Passing null means that only CPU defragmentation will be performed. \mbox{\Hypertarget{structVmaDefragmentationInfo2_a94c2c7223d52878445a8cccce396b671}\label{structVmaDefragmentationInfo2_a94c2c7223d52878445a8cccce396b671}} 
+\index{VmaDefragmentationInfo2@{VmaDefragmentationInfo2}!maxCpuAllocationsToMove@{maxCpuAllocationsToMove}}
+\index{maxCpuAllocationsToMove@{maxCpuAllocationsToMove}!VmaDefragmentationInfo2@{VmaDefragmentationInfo2}}
+\doxysubsubsection{\texorpdfstring{maxCpuAllocationsToMove}{maxCpuAllocationsToMove}}
+{\footnotesize\ttfamily uint32\+\_\+t Vma\+Defragmentation\+Info2\+::max\+Cpu\+Allocations\+To\+Move}
+
+
+
+Maximum number of allocations that can be moved to a different place using transfers on CPU side, like {\ttfamily memcpy()}, {\ttfamily memmove()}. 
+
+{\ttfamily UINT32\+\_\+\+MAX} means no limit. \mbox{\Hypertarget{structVmaDefragmentationInfo2_af78e1ea40c22d85137b65f6b384a4d0a}\label{structVmaDefragmentationInfo2_af78e1ea40c22d85137b65f6b384a4d0a}} 
+\index{VmaDefragmentationInfo2@{VmaDefragmentationInfo2}!maxCpuBytesToMove@{maxCpuBytesToMove}}
+\index{maxCpuBytesToMove@{maxCpuBytesToMove}!VmaDefragmentationInfo2@{VmaDefragmentationInfo2}}
+\doxysubsubsection{\texorpdfstring{maxCpuBytesToMove}{maxCpuBytesToMove}}
+{\footnotesize\ttfamily Vk\+Device\+Size Vma\+Defragmentation\+Info2\+::max\+Cpu\+Bytes\+To\+Move}
+
+
+
+Maximum total numbers of bytes that can be copied while moving allocations to different places using transfers on CPU side, like {\ttfamily memcpy()}, {\ttfamily memmove()}. 
+
+{\ttfamily VK\+\_\+\+WHOLE\+\_\+\+SIZE} means no limit. \mbox{\Hypertarget{structVmaDefragmentationInfo2_a40d53d33e71ba0b66f844ed63c05a3f6}\label{structVmaDefragmentationInfo2_a40d53d33e71ba0b66f844ed63c05a3f6}} 
+\index{VmaDefragmentationInfo2@{VmaDefragmentationInfo2}!maxGpuAllocationsToMove@{maxGpuAllocationsToMove}}
+\index{maxGpuAllocationsToMove@{maxGpuAllocationsToMove}!VmaDefragmentationInfo2@{VmaDefragmentationInfo2}}
+\doxysubsubsection{\texorpdfstring{maxGpuAllocationsToMove}{maxGpuAllocationsToMove}}
+{\footnotesize\ttfamily uint32\+\_\+t Vma\+Defragmentation\+Info2\+::max\+Gpu\+Allocations\+To\+Move}
+
+
+
+Maximum number of allocations that can be moved to a different place using transfers on GPU side, posted to {\ttfamily command\+Buffer}. 
+
+{\ttfamily UINT32\+\_\+\+MAX} means no limit. \mbox{\Hypertarget{structVmaDefragmentationInfo2_a4ddbc898d0afe1518f863a3763628f08}\label{structVmaDefragmentationInfo2_a4ddbc898d0afe1518f863a3763628f08}} 
+\index{VmaDefragmentationInfo2@{VmaDefragmentationInfo2}!maxGpuBytesToMove@{maxGpuBytesToMove}}
+\index{maxGpuBytesToMove@{maxGpuBytesToMove}!VmaDefragmentationInfo2@{VmaDefragmentationInfo2}}
+\doxysubsubsection{\texorpdfstring{maxGpuBytesToMove}{maxGpuBytesToMove}}
+{\footnotesize\ttfamily Vk\+Device\+Size Vma\+Defragmentation\+Info2\+::max\+Gpu\+Bytes\+To\+Move}
+
+
+
+Maximum total numbers of bytes that can be copied while moving allocations to different places using transfers on GPU side, posted to {\ttfamily command\+Buffer}. 
+
+{\ttfamily VK\+\_\+\+WHOLE\+\_\+\+SIZE} means no limit. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+vk\+\_\+mem\+\_\+alloc.\+h\end{DoxyCompactItemize}

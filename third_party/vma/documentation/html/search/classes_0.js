@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['vmaallocation_92',['VmaAllocation',['../structVmaAllocation.html',1,'']]],
+  ['vmaallocationcreateinfo_93',['VmaAllocationCreateInfo',['../structVmaAllocationCreateInfo.html',1,'']]],
+  ['vmaallocationinfo_94',['VmaAllocationInfo',['../structVmaAllocationInfo.html',1,'']]],
+  ['vmaallocator_95',['VmaAllocator',['../structVmaAllocator.html',1,'']]],
+  ['vmaallocatorcreateinfo_96',['VmaAllocatorCreateInfo',['../structVmaAllocatorCreateInfo.html',1,'']]],
+  ['vmaallocatorinfo_97',['VmaAllocatorInfo',['../structVmaAllocatorInfo.html',1,'']]],
+  ['vmabudget_98',['VmaBudget',['../structVmaBudget.html',1,'']]],
+  ['vmadefragmentationcontext_99',['VmaDefragmentationContext',['../structVmaDefragmentationContext.html',1,'']]],
+  ['vmadefragmentationinfo_100',['VmaDefragmentationInfo',['../structVmaDefragmentationInfo.html',1,'']]],
+  ['vmadefragmentationinfo2_101',['VmaDefragmentationInfo2',['../structVmaDefragmentationInfo2.html',1,'']]],
+  ['vmadefragmentationpassinfo_102',['VmaDefragmentationPassInfo',['../structVmaDefragmentationPassInfo.html',1,'']]],
+  ['vmadefragmentationpassmoveinfo_103',['VmaDefragmentationPassMoveInfo',['../structVmaDefragmentationPassMoveInfo.html',1,'']]],
+  ['vmadefragmentationstats_104',['VmaDefragmentationStats',['../structVmaDefragmentationStats.html',1,'']]],
+  ['vmadevicememorycallbacks_105',['VmaDeviceMemoryCallbacks',['../structVmaDeviceMemoryCallbacks.html',1,'']]],
+  ['vmapool_106',['VmaPool',['../structVmaPool.html',1,'']]],
+  ['vmapoolcreateinfo_107',['VmaPoolCreateInfo',['../structVmaPoolCreateInfo.html',1,'']]],
+  ['vmapoolstats_108',['VmaPoolStats',['../structVmaPoolStats.html',1,'']]],
+  ['vmarecordsettings_109',['VmaRecordSettings',['../structVmaRecordSettings.html',1,'']]],
+  ['vmastatinfo_110',['VmaStatInfo',['../structVmaStatInfo.html',1,'']]],
+  ['vmastats_111',['VmaStats',['../structVmaStats.html',1,'']]],
+  ['vmavulkanfunctions_112',['VmaVulkanFunctions',['../structVmaVulkanFunctions.html',1,'']]]
+];

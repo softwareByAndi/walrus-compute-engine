@@ -1,0 +1,23 @@
+\hypertarget{structVmaAllocator}{}\doxysection{Vma\+Allocator Struct Reference}
+\label{structVmaAllocator}\index{VmaAllocator@{VmaAllocator}}
+
+
+Represents main object of this library initialized.  
+
+
+
+
+{\ttfamily \#include $<$vk\+\_\+mem\+\_\+alloc.\+h$>$}
+
+
+
+\doxysubsection{Detailed Description}
+Represents main object of this library initialized. 
+
+Fill structure \mbox{\hyperlink{structVmaAllocatorCreateInfo}{Vma\+Allocator\+Create\+Info}} and call function vma\+Create\+Allocator() to create it. Call function vma\+Destroy\+Allocator() to destroy it.
+
+It is recommended to create just one object of this type per {\ttfamily Vk\+Device} object, right after Vulkan is initialized and keep it alive until before Vulkan device is destroyed. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+vk\+\_\+mem\+\_\+alloc.\+h\end{DoxyCompactItemize}

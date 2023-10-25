@@ -1,0 +1,103 @@
+{\bfseries{Version 3.\+0.\+0-\/development}} (2020-\/03-\/23)
+
+Copyright (c) 2017-\/2020 Advanced Micro Devices, Inc. All rights reserved. ~\newline
+License\+: MIT
+
+Documentation of all members\+: \mbox{\hyperlink{vk__mem__alloc_8h_source}{vk\+\_\+mem\+\_\+alloc.\+h}}\hypertarget{index_main_table_of_contents}{}\doxysection{Table of contents}\label{index_main_table_of_contents}
+
+\begin{DoxyItemize}
+\item {\bfseries{User guide}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{quick_start}{Quick start}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{quick_start_quick_start_project_setup}{Project setup}}
+\item \mbox{\hyperlink{quick_start_quick_start_initialization}{Initialization}}
+\item \mbox{\hyperlink{quick_start_quick_start_resource_allocation}{Resource allocation}}
+\end{DoxyItemize}
+\item \mbox{\hyperlink{choosing_memory_type}{Choosing memory type}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{choosing_memory_type_choosing_memory_type_usage}{Usage}}
+\item \mbox{\hyperlink{choosing_memory_type_choosing_memory_type_required_preferred_flags}{Required and preferred flags}}
+\item \mbox{\hyperlink{choosing_memory_type_choosing_memory_type_explicit_memory_types}{Explicit memory types}}
+\item \mbox{\hyperlink{choosing_memory_type_choosing_memory_type_custom_memory_pools}{Custom memory pools}}
+\item \mbox{\hyperlink{choosing_memory_type_choosing_memory_type_dedicated_allocations}{Dedicated allocations}}
+\end{DoxyItemize}
+\item \mbox{\hyperlink{memory_mapping}{Memory mapping}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{memory_mapping_memory_mapping_mapping_functions}{Mapping functions}}
+\item \mbox{\hyperlink{memory_mapping_memory_mapping_persistently_mapped_memory}{Persistently mapped memory}}
+\item \mbox{\hyperlink{memory_mapping_memory_mapping_cache_control}{Cache flush and invalidate}}
+\item \mbox{\hyperlink{memory_mapping_memory_mapping_finding_if_memory_mappable}{Finding out if memory is mappable}}
+\end{DoxyItemize}
+\item \mbox{\hyperlink{staying_within_budget}{Staying within budget}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{staying_within_budget_staying_within_budget_querying_for_budget}{Querying for budget}}
+\item \mbox{\hyperlink{staying_within_budget_staying_within_budget_controlling_memory_usage}{Controlling memory usage}}
+\end{DoxyItemize}
+\item \mbox{\hyperlink{custom_memory_pools}{Custom memory pools}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{custom_memory_pools_custom_memory_pools_MemTypeIndex}{Choosing memory type index}}
+\item \mbox{\hyperlink{custom_memory_pools_linear_algorithm}{Linear allocation algorithm}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{custom_memory_pools_linear_algorithm_free_at_once}{Free-\/at-\/once}}
+\item \mbox{\hyperlink{custom_memory_pools_linear_algorithm_stack}{Stack}}
+\item \mbox{\hyperlink{custom_memory_pools_linear_algorithm_double_stack}{Double stack}}
+\item \mbox{\hyperlink{custom_memory_pools_linear_algorithm_ring_buffer}{Ring buffer}}
+\end{DoxyItemize}
+\item \mbox{\hyperlink{custom_memory_pools_buddy_algorithm}{Buddy allocation algorithm}}
+\end{DoxyItemize}
+\item \mbox{\hyperlink{defragmentation}{Defragmentation}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{defragmentation_defragmentation_cpu}{Defragmenting CPU memory}}
+\item \mbox{\hyperlink{defragmentation_defragmentation_gpu}{Defragmenting GPU memory}}
+\item \mbox{\hyperlink{defragmentation_defragmentation_additional_notes}{Additional notes}}
+\item \mbox{\hyperlink{defragmentation_defragmentation_custom_algorithm}{Writing custom allocation algorithm}}
+\end{DoxyItemize}
+\item \mbox{\hyperlink{lost_allocations}{Lost allocations}}
+\item \mbox{\hyperlink{statistics}{Statistics}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{statistics_statistics_numeric_statistics}{Numeric statistics}}
+\item \mbox{\hyperlink{statistics_statistics_json_dump}{JSON dump}}
+\end{DoxyItemize}
+\item \mbox{\hyperlink{allocation_annotation}{Allocation names and user data}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{allocation_annotation_allocation_user_data}{Allocation user data}}
+\item \mbox{\hyperlink{allocation_annotation_allocation_names}{Allocation names}}
+\end{DoxyItemize}
+\item \mbox{\hyperlink{debugging_memory_usage}{Debugging incorrect memory usage}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{debugging_memory_usage_debugging_memory_usage_initialization}{Memory initialization}}
+\item \mbox{\hyperlink{debugging_memory_usage_debugging_memory_usage_margins}{Margins}}
+\item \mbox{\hyperlink{debugging_memory_usage_debugging_memory_usage_corruption_detection}{Corruption detection}}
+\end{DoxyItemize}
+\item \mbox{\hyperlink{record_and_replay}{Record and replay}}
+\end{DoxyItemize}
+\item \mbox{\hyperlink{usage_patterns}{Recommended usage patterns}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{usage_patterns_usage_patterns_common_mistakes}{Common mistakes}}
+\item \mbox{\hyperlink{usage_patterns_usage_patterns_simple}{Simple patterns}}
+\item \mbox{\hyperlink{usage_patterns_usage_patterns_advanced}{Advanced patterns}}
+\end{DoxyItemize}
+\item \mbox{\hyperlink{configuration}{Configuration}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{configuration_config_Vulkan_functions}{Pointers to Vulkan functions}}
+\item \mbox{\hyperlink{configuration_custom_memory_allocator}{Custom host memory allocator}}
+\item \mbox{\hyperlink{configuration_allocation_callbacks}{Device memory allocation callbacks}}
+\item \mbox{\hyperlink{configuration_heap_memory_limit}{Device heap memory limit}}
+\item \mbox{\hyperlink{vk_khr_dedicated_allocation}{VK\+\_\+\+KHR\+\_\+dedicated\+\_\+allocation}}
+\item \mbox{\hyperlink{enabling_buffer_device_address}{Enabling buffer device address}}
+\item \mbox{\hyperlink{vk_amd_device_coherent_memory}{VK\+\_\+\+AMD\+\_\+device\+\_\+coherent\+\_\+memory}}
+\end{DoxyItemize}
+\item \mbox{\hyperlink{general_considerations}{General considerations}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{general_considerations_general_considerations_thread_safety}{Thread safety}}
+\item \mbox{\hyperlink{general_considerations_general_considerations_validation_layer_warnings}{Validation layer warnings}}
+\item \mbox{\hyperlink{general_considerations_general_considerations_allocation_algorithm}{Allocation algorithm}}
+\item \mbox{\hyperlink{general_considerations_general_considerations_features_not_supported}{Features not supported}}
+\end{DoxyItemize}
+\end{DoxyItemize}\hypertarget{index_main_see_also}{}\doxysection{See also}\label{index_main_see_also}
+
+\begin{DoxyItemize}
+\item \href{https://gpuopen.com/gaming-product/vulkan-memory-allocator/}{\texttt{ Product page on GPUOpen}}
+\item \href{https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator}{\texttt{ Source repository on Git\+Hub}} 
+\end{DoxyItemize}

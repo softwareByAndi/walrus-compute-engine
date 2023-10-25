@@ -1,0 +1,31 @@
+When developing a graphics-\/intensive game or program, it is important to avoid allocating more GPU memory than it\textquotesingle{}s physically available. When the memory is over-\/committed, various bad things can happen, depending on the specific GPU, graphics driver, and operating system\+:
+
+
+\begin{DoxyItemize}
+\item It may just work without any problems.
+\item The application may slow down because some memory blocks are moved to system RAM and the GPU has to access them through PCI Express bus.
+\item A new allocation may take very long time to complete, even few seconds, and possibly freeze entire system.
+\item The new allocation may fail with {\ttfamily VK\+\_\+\+ERROR\+\_\+\+OUT\+\_\+\+OF\+\_\+\+DEVICE\+\_\+\+MEMORY}.
+\item It may even result in GPU crash (TDR), observed as {\ttfamily VK\+\_\+\+ERROR\+\_\+\+DEVICE\+\_\+\+LOST} returned somewhere later.
+\end{DoxyItemize}\hypertarget{staying_within_budget_staying_within_budget_querying_for_budget}{}\doxysection{Querying for budget}\label{staying_within_budget_staying_within_budget_querying_for_budget}
+To query for current memory usage and available budget, use function vma\+Get\+Budget(). Returned structure \mbox{\hyperlink{structVmaBudget}{Vma\+Budget}} contains quantities expressed in bytes, per Vulkan memory heap.
+
+Please note that this function returns different information and works faster than vma\+Calculate\+Stats(). vma\+Get\+Budget() can be called every frame or even before every allocation, while vma\+Calculate\+Stats() is intended to be used rarely, only to obtain statistical information, e.\+g. for debugging purposes.
+
+It is recommended to use {\bfseries{VK\+\_\+\+EXT\+\_\+memory\+\_\+budget}} device extension to obtain information about the budget from Vulkan device. VMA is able to use this extension automatically. When not enabled, the allocator behaves same way, but then it estimates current usage and available budget based on its internal information and Vulkan memory heap sizes, which may be less precise. In order to use this extension\+:
+
+
+\begin{DoxyEnumerate}
+\item Make sure extensions VK\+\_\+\+EXT\+\_\+memory\+\_\+budget and VK\+\_\+\+KHR\+\_\+get\+\_\+physical\+\_\+device\+\_\+properties2 required by it are available and enable them. Please note that the first is a device extension and the second is instance extension!
+\item Use flag \#\+VMA\+\_\+\+ALLOCATOR\+\_\+\+CREATE\+\_\+\+EXT\+\_\+\+MEMORY\+\_\+\+BUDGET\+\_\+\+BIT when creating \mbox{\hyperlink{structVmaAllocator}{Vma\+Allocator}} object.
+\item Make sure to call vma\+Set\+Current\+Frame\+Index() every frame. Budget is queried from Vulkan inside of it to avoid overhead of querying it with every allocation.
+\end{DoxyEnumerate}\hypertarget{staying_within_budget_staying_within_budget_controlling_memory_usage}{}\doxysection{Controlling memory usage}\label{staying_within_budget_staying_within_budget_controlling_memory_usage}
+There are many ways in which you can try to stay within the budget.
+
+First, when making new allocation requires allocating a new memory block, the library tries not to exceed the budget automatically. If a block with default recommended size (e.\+g. 256 MB) would go over budget, a smaller block is allocated, possibly even dedicated memory for just this resource.
+
+If the size of the requested resource plus current memory usage is more than the budget, by default the library still tries to create it, leaving it to the Vulkan implementation whether the allocation succeeds or fails. You can change this behavior by using \#\+VMA\+\_\+\+ALLOCATION\+\_\+\+CREATE\+\_\+\+WITHIN\+\_\+\+BUDGET\+\_\+\+BIT flag. With it, the allocation is not made if it would exceed the budget or if the budget is already exceeded. Some other allocations become lost instead to make room for it, if the mechanism of \mbox{\hyperlink{lost_allocations}{lost allocations}} is used. If that is not possible, the allocation fails with {\ttfamily VK\+\_\+\+ERROR\+\_\+\+OUT\+\_\+\+OF\+\_\+\+DEVICE\+\_\+\+MEMORY}. Example usage pattern may be to pass the \#\+VMA\+\_\+\+ALLOCATION\+\_\+\+CREATE\+\_\+\+WITHIN\+\_\+\+BUDGET\+\_\+\+BIT flag when creating resources that are not essential for the application (e.\+g. the texture of a specific object) and not to pass it when creating critically important resources (e.\+g. render targets).
+
+Finally, you can also use \#\+VMA\+\_\+\+ALLOCATION\+\_\+\+CREATE\+\_\+\+NEVER\+\_\+\+ALLOCATE\+\_\+\+BIT flag to make sure a new allocation is created only when it fits inside one of the existing memory blocks. If it would require to allocate a new block, if fails instead with {\ttfamily VK\+\_\+\+ERROR\+\_\+\+OUT\+\_\+\+OF\+\_\+\+DEVICE\+\_\+\+MEMORY}. This also ensures that the function call is very fast because it never goes to Vulkan to obtain a new block.
+
+Please note that creating \mbox{\hyperlink{custom_memory_pools}{Custom memory pools}} with \mbox{\hyperlink{structVmaPoolCreateInfo_ad8006fb803185c0a699d30f3e9a865ae}{Vma\+Pool\+Create\+Info\+::min\+Block\+Count}} set to more than 0 will try to allocate memory blocks without checking whether they fit within budget. 
