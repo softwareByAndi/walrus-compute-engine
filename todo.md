@@ -2,6 +2,11 @@
 
 Note that this document is subject to drastic changes
 
+# research tasks
+- [ ] vulkan allocators
+- [ ] swapchain : post processing
+- [ ] swapchain imageSharingMode : cover ownership chapters to implement exclusive logic instead of concurrent logic
+
 # bare-bones: 
 
 ### basic vulkan setup:
