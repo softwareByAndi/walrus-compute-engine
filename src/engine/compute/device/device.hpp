@@ -172,7 +172,6 @@ namespace walrus {
   public:
     /// @brief a vector of support features for each queue in the device
     std::vector<QueueFamilyData> queueData{};
-    /// TODO : what's the difference between properties and features?
     VkPhysicalDeviceProperties properties{};
     VkPhysicalDeviceFeatures features{};
 
@@ -180,12 +179,21 @@ namespace walrus {
      * @brief sets the default required tasks for the device. \n\n
      * the default of ALL is only used by the default constructor
      * -- and is overwritten by the explicit constructor which also defaults to ALL
+     * @TODO : should we factor out a device level task in favor of queue level tasks? then compare requested task with queue level tasks to pull the correct queue from the device?
      */
-    DeviceTask task = ALL; /// TODO : should we factor out a device level task in favor of queue level tasks? then compare requested task with queue level tasks to pull the correct queue from the device?
-    /// @brief a variable to score how close the device queue support matches with `task`
-    uint32_t score = 0; /// FIXME : do we need a device level score?
-    /// @brief a device level support reference as across all queues?
-    Support supportSummary{}; /// FIXME : do we need a global support reference? the queueData vector already holds this data for each queue family
+    DeviceTask task = ALL;
+
+    /**
+     * @brief a variable to score how close the device queue support matches with `task`
+     * @TODO : this used as a quick suitability reference. consider refactoring to be more descriptive than just a score...?
+     */
+    uint32_t score = 0;
+
+    /**
+     * @brief a device level support reference as across all queues?
+     * FIXME : do we need a global support reference? the queueData vector already holds this data for each queue family
+     */
+    Support supportSummary{};
 
 
   }; // class DeviceInfo
