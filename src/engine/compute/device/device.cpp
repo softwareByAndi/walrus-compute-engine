@@ -357,8 +357,7 @@ namespace walrus {
 
 
 
-    /// FIXME : most suitable for what...?
-    /// TODO : pass in task as an argument
+    /// FIXME : most suitable for what...? pass in task as an argument
     void DeviceInfo::selectMostSuitedQueue()
     {
       _bestQueueIndex = -1;
