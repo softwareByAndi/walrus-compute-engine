@@ -2,7 +2,7 @@
 
 ## vulkan:
 - [vulkan-tutorial.com](https://vulkan-tutorial.com)
-  - [vulkan-tutorial pdf](./vulkan_tutorial_en.pdf)
+  - [vulkan-tutorial pdf](./notes/vulkan_tutorial_en.pdf)
 - [vkguide](https://vkguide.dev/docs/introduction/vulkan_overview)
 - [vma documentation (vulkan memory allocation)](./third_party/vma/documentation/html/index.html)
 - __mike bailey's vulkan course content__
