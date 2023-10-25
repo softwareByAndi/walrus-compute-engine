@@ -138,6 +138,8 @@ namespace walrus {
   public:
     void print();
 
+    int getBestQueueIndex() { return _bestQueueIndex; }
+
     static void createLogicalDevice(
             DeviceInfo &deviceInfo,
             VkPhysicalDevice &vkPhysicalDevice,

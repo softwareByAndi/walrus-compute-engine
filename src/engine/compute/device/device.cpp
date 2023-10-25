@@ -388,7 +388,7 @@ namespace walrus {
 
 
 
-
+  /// @brief create a logical device and queues for the (single) queue family with the highest suitability score
   void DeviceInfo::createLogicalDevice(
           DeviceInfo &deviceInfo,
           VkPhysicalDevice &vkPhysicalDevice,
@@ -407,17 +407,22 @@ namespace walrus {
         + std::string(deviceInfo.properties.deviceName)
       );
     }
+    /// TODO : QUEUE REFACTOR - support multiple queue families for a device
+
+    auto bestQueueFamily = deviceInfo.queueData[deviceInfo._bestQueueIndex];
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos{};
-    float queuePriority = 1.0f;
-    for (QueueFamilyData queueFamilyData : deviceInfo.queueData) {
-      VkDeviceQueueCreateInfo queueCreateInfo = {};
-      queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-      queueCreateInfo.queueFamilyIndex = queueFamilyData.queueFamilyIndex;
-      queueCreateInfo.queueCount = queueFamilyData.queueCount;
-      queueCreateInfo.pQueuePriorities = &queuePriority;
-      queueCreateInfos.push_back(queueCreateInfo);
-    }
+    std::vector<float> queuePriorities(bestQueueFamily.queueCount, 1.0f);
+    VkDeviceQueueCreateInfo queueCreateInfo = {};
+    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queueCreateInfo.queueFamilyIndex = bestQueueFamily.queueFamilyIndex;
+    queueCreateInfo.queueCount = bestQueueFamily.queueCount;
+    queueCreateInfo.pQueuePriorities = queuePriorities.data();
+    queueCreateInfos.push_back(queueCreateInfo);
+    std::cout << io::to_color_string(
+            io::Color::LIGHT_PURPLE,
+            "queueCreateInfos.size() = " + std::to_string(queueCreateInfos.size())
+    ) << std::endl;
 
     // if samplerAnisotropy is supported, enable it
     VkPhysicalDeviceFeatures deviceFeatures{};
@@ -442,10 +447,16 @@ namespace walrus {
     if (vkCreateDevice(vkPhysicalDevice, &createInfo, nullptr, device) != VK_SUCCESS) {
       throw std::runtime_error("failed to create logical device!");
     }
-    for (uint32_t i = 0; i < deviceInfo.queueData.size(); i++) {
-      if (deviceInfo.queueData[i].score > 0) {
+
+    if (bestQueueFamily.score > 0) {
+      for (uint32_t qIndex = 0; qIndex < bestQueueFamily.queueCount; qIndex++) {
         queues.push_back(VK_NULL_HANDLE);
-        vkGetDeviceQueue(*device, deviceInfo._bestQueueIndex, 0, &queues.back());
+        vkGetDeviceQueue(
+                *device,
+                bestQueueFamily.queueFamilyIndex,
+                qIndex,
+                &queues.back()
+        );
       }
     }
   }

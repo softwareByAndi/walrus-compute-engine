@@ -9,6 +9,7 @@ Note that this document is subject to drastic changes
 finish basic vulkan setup from ( [vulkan-tutorial.com](https://vulkan-tutorial.com) )  
 - [x] presentation
 - [ ] device queue abstraction
+  - [x] select best queue across all devices (single queue) 
 - [ ] graphics pipeline  
 - [ ] drawing  
 - [ ] dynamic swapchain recreation  

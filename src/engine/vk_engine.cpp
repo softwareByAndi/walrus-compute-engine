@@ -191,10 +191,10 @@ namespace walrus {
       // select most suited device
       int selectedDeviceIndex = -1;
       for (int i = 0; i < devicesInfos.size(); i++) {
-        // FIXME : add support for non-general purpose devices
-        if (devicesInfos[i].queueData.size() == 1 // FIXME : a hack to select a general purpose device
-            && (selectedDeviceIndex < 0
-                || devicesInfos[i].score > devicesInfos[selectedDeviceIndex].score)
+        // FIXME : QUEUE REFACTOR -- add support for non-general purpose queues
+        // NOTE : currently only supports devices with complete support
+        if (selectedDeviceIndex < 0
+            || devicesInfos[i].score > devicesInfos[selectedDeviceIndex].score
         ){
           selectedDeviceIndex = i;
         }
@@ -216,21 +216,23 @@ namespace walrus {
       std::cout << "queue size: " << _queues.size() << std::endl;
       std::cout << "queue data size: " << _deviceInfo.queueData.size() << std::endl;
 
-      // TODO: refactor commands and queue logic to work with not-complete-support queue families.
-      assert( !_deviceInfo.queueData.empty()
-              && "missing queues?");
-      assert( _queues.size() == _deviceInfo.queueData.size()
-              && "uh oh... something's wrong with the queue setup...");
+      // TODO: QUEUE REFACTOR -- update commands and queue logic to work with not-complete-support queue families.
+
       bool graphics = _task & DeviceTask::GRAPHICS;
       bool compute = _task & DeviceTask::COMPUTE;
-      for (const auto &queue: _deviceInfo.queueData) {
-        assert( !compute
-                || queue.support.compute
-                && "for current logic, all queues must support the device specified task");
-        assert( !graphics
-                || queue.support.isComplete()
-                && "for current logic, all graphics tasks must have complete support");
-      }
+
+      assert( !_deviceInfo.queueData.empty()
+              && "missing queues?");
+      assert( _deviceInfo.getBestQueueIndex() >= 0
+              && "best queue not selected...");
+      auto bestQueue = _deviceInfo.queueData[_deviceInfo.getBestQueueIndex()];
+
+      assert( !compute
+              || bestQueue.support.compute
+              && "for current logic, all queues must support the device specified task");
+      assert( !graphics
+              || bestQueue.support.isComplete()
+              && "for current logic, all graphics tasks must have complete support");
     }
 
 
@@ -250,11 +252,8 @@ namespace walrus {
   void VulkanEngine::init_commands() {
     /// COMMAND POOL
     {
-      // FIXME : hard coded queue index? what's the point of all queue families supporting all features if we only use the one queue??
-      // TODO - QUEUE REFACTOR : pull this value from a queue manager
       // TODO - QUEUE REFACTOR : add support for multiple command pools & queues (each queue family should have its own command pool)
-      // TODO : add logic -- should this be a graphics queue or a compute queue?
-      const int queueFamilyIndex = 0;
+      const int queueFamilyIndex = _deviceInfo.getBestQueueIndex();
       assert( _device != VK_NULL_HANDLE
               && "device not setup");
       assert( !_queues.empty()
@@ -356,22 +355,24 @@ namespace walrus {
         TODO: cover ownership chapters to implement exclusive logic instead of concurrent logic
       */
 
-      /// number of queues will determine concurrent v.s. exclusive
-      /// FIXME : this will need to be refactored when queue abstraction is implemented
-      std::vector<uint32_t> queueIndices(_queues.size());
-      for (uint32_t i = 0; i < _queues.size(); i++) {
-        queueIndices[i] = i;
-      }
-      if (_queues.size() > 1) {
+      /// number of QueueFamilies will determine concurrent v.s. exclusive
+      // only 1 queue family is supported for now
+      const std::vector<uint32_t> queueFamilyIndices = {
+              static_cast<uint32_t>(_deviceInfo.getBestQueueIndex())
+              // TODO : QUEUE REFACTOR - add support for multiple queue families
+      };
+      if (queueFamilyIndices.size() > 1) {
+        /// FIXME : this code will never run until support for multiple queue families
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        /// specify between which queue families image ownership will be shared.
-        /// for now, image ownership will be shared across all queues.
-        createInfo.queueFamilyIndexCount = _queues.size(); /// FIXME : should this be queueIndices.size()?
-        createInfo.pQueueFamilyIndices = queueIndices.data();
+        // specify between which queue families image ownership will be shared.
+        // the current code states that image ownership will be shared across all queues.
+        createInfo.queueFamilyIndexCount = queueFamilyIndices.size();
+        createInfo.pQueueFamilyIndices = queueFamilyIndices.data();
       } else {
+        /// always this code for now
         createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        createInfo.queueFamilyIndexCount = 0;
-        createInfo.pQueueFamilyIndices = nullptr;
+        createInfo.queueFamilyIndexCount = 0;     // param is ignored if imageSharingMode is exclusive
+        createInfo.pQueueFamilyIndices = nullptr; // param is ignored if imageSharingMode is exclusive
       }
 
       // create swapchain

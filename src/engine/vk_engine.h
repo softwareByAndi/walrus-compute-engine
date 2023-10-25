@@ -95,6 +95,7 @@ namespace walrus {
     VkInstance _instance = VK_NULL_HANDLE;
     VkDevice _device = VK_NULL_HANDLE;
     VkPhysicalDevice _physicalDevice = VK_NULL_HANDLE;
+    /// TODO : QUEUE REFACTOR - support multiple devices & support multiple queue families across multiple devices
     DeviceInfo _deviceInfo{};
     std::vector<VkQueue> _queues{};
     std::vector<VkPhysicalDevice> _physicalDevices{};
