@@ -3,6 +3,9 @@
 Note that this document is subject to drastic changes
 
 # research tasks
+- [ ] read this blog post (and subsequent research to understand it): [KHRONOS new task/mesh pipeline](https://www.khronos.org/blog/mesh-shading-for-vulkan)
+- [ ] read the vulkan tutorial: [vulkan-tutorial.com](https://vulkan-tutorial.com)
+- [ ] read through mike bailey's vulkan course
 - [ ] vulkan allocators
 - [ ] swapchain : post processing
 - [ ] swapchain imageSharingMode : cover ownership chapters to implement exclusive logic instead of concurrent logic
