@@ -14,7 +14,7 @@ vkPhysicalDevices->resize(deviceCount);
 vkEnumeratePhysicalDevices(instance, &deviceCount, vkPhysicalDevices->data());
 ```
 
-## retrieving properties & features
+## retrieving properties and features
 ```cpp
 VkPhysicalDeviceProperties properties{};
 VkPhysicalDeviceFeatures features{};
@@ -26,7 +26,7 @@ vkGetPhysicalDeviceFeatures(vkPhysicalDevice, &features);
 ```
 
 
-## what's the difference between properties & features? (gpt3.5)
+## what's the difference between properties and features? (gpt3.5)
 In Vulkan, `device properties` and `device features` are two different sets of information that describe the capabilities and characteristics of a Vulkan-capable graphics device (GPU). 
 
 In brief, `device properties` provide static information about the GPU, such as its name, type, and supported Vulkan version, while `device features` describe the functional capabilities and optional features that the GPU supports, which can affect how you configure and use Vulkan in your application.
