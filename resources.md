@@ -1,26 +1,44 @@
 # development resources
 
-## vulkan:
+## documentation:
+- [vulkan documentation](https://renderdoc.org/vkspec_chunked/chap3.html#fundamentals)
+- [vma documentation (vulkan memory allocation)](./third_party/vma/documentation/html/index.html)
+
+
+## tutorials:
 - [vulkan-tutorial.com](https://vulkan-tutorial.com)
   - [vulkan-tutorial pdf](./notes/vulkan_tutorial_en.pdf)
 - [vkguide](https://vkguide.dev/docs/introduction/vulkan_overview)
-- [vma documentation (vulkan memory allocation)](./third_party/vma/documentation/html/index.html)
+- [intel's vulkan tutorial](https://www.intel.com/content/www/us/en/developer/articles/training/api-without-secrets-introduction-to-vulkan-part-1.html)
+
+## github
+- [SaschaWillems code samples](https://github.com/SaschaWillems/Vulkan)
+- [vinjn's huge repository of vulkan resources](https://github.com/vinjn/awesome-vulkan)
+- [OpenGL v.s. Vulkan](https://github.com/nxp-imx/gtec-demo-framework)
+  (designed to be comparable using diff tools)
+
+## courses:
 - __mike bailey's vulkan course content__
   - [vulkan course content](https://web.engr.oregonstate.edu/~mjb/cs519v/)
   - [vulkan course files & references](https://web.engr.oregonstate.edu/~mjb/vulkan/) 
 
-
 ## blog posts
+- [vulkan fundamentals](https://liamhz.com/blog/vulkan-fundamentals.html)
+  (great read)
 - [KHRONOS new task/mesh pipeline](https://www.khronos.org/blog/mesh-shading-for-vulkan)
   __(TODO : implement this)__
 - [AMD open sources V-EZ (a vulkan wrapper library)](https://hub.packtpub.com/amd-open-sources-v-ez-the-vulkan-wrapper-library)
 
 ## youtube:
-- [vulkan graphics pipeline overview](https://www.youtube.com/watch?app=desktop&v=_riranMmtvI)
+- [youtube vulkan graphics pipeline overview](https://www.youtube.com/watch?app=desktop&v=_riranMmtvI)
 
 
 ## third party library options:
 - [ReactPhysics3D](https://www.reactphysics3d.com)
+
+<br>
+
+<hr>
 
 ## NOTES
 
